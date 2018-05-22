@@ -1,49 +1,49 @@
 import collections
-import random
 
 filename = "0.edges"
+LOOPLIMIT = 1000
 def readData():
     graph = {}
     f = open(filename,'r')
     for line in f.readlines():
-        line = line.split(" ")
-        nodeu = graph.getdefault(int(line[0],[]))
-        nodeu.append(int(line[1]))
-        nodev = graph.getdefault(int(line[1],[]))
-        nodev.append(int(line[0]))
+        line= line.strip('\n').split(' ')
+        u,v = int(line[0]),int(line[1])
+        graph.setdefault(u,[])
+        graph.setdefault(v,[])
+        graph[u].append(v)
+        graph[v].append(u)
     return graph
 
 def getMost(nodeU):
     counter = collections.Counter(nodeU)
-    ta = sorted(counter.items(),key = lambda x:x[1])
+    tmpls = sorted(counter.items(),key = lambda it:-it[1])
+    return tmpls[0][0]
 
-    maxc = ta[-1][1]
-    maxlist = []
-    for x in ta :
-        if(x[1]==maxc):
-            maxlist.append(x[0])
-
-    random.shuffle(maxlist)
-    return maxlist[0]
-
-def checkEnd(cluster,data):
-    flag = 0
+def checkEnd(label,data):
     for x in data.keys():
-        if(cluster[x] != getMost(data[x])):
+        if(label[x] != getMost(data[x])):
             return 0
     return 1
-def update(cluster,data):
+
+def update(label,data):   #修改data数组
     for x in data.keys():
-        data[x] = [cluster[i] for i in data[x]]
+        data[x] = [label[i] for i in data[x]]
+
 def main(mydata):
     data = mydata.copy()
-    cluster = dict([(_,_) for _ in data.keys()])
+    label = dict([(i,i) for i in data.keys()])
+    loopcnt = 0
     while True:
-        if(checkEnd(cluster,data)): break
-        for i in cluster.keys():
-            cluster[i] = getMost(data[i])
-            update(cluster,data)
-    return cluster
+        loopcnt += 1
+        if(loopcnt>LOOPLIMIT or checkEnd(label,data)):
+            if(loopcnt>LOOPLIMIT): print("Exit loop because of Limitation")
+            else : print("Exit loop becase of Astringent")
+            break
+        for i in label.keys():
+            label[i] = getMost(data[i])     #修改label标签
+            update(label,data)
+
+    return label
 
 graph = readData()
-main(graph)
+print(main(graph))
