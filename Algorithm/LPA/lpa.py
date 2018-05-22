@@ -1,15 +1,28 @@
 import collections
+from collections import defaultdict
+import os
 
-filename = "0.edges"
 LOOPLIMIT = 1000
-def readData():
-    graph = {}
+def anylizeDir(path):
+    res = defaultdict(list)
+    for tname in os.listdir(path):
+        wholename = os.path.join(path,tname)
+        if(os.path.isdir(wholename)):
+            res['dir'].append(wholename)
+        else:
+            _,type = tname.split('.')
+            if(type=="edges"):
+                res['edges'].append(wholename)
+            else:
+                res["elsefile"].append(wholename)
+    return res
+
+def readData(filename):
+    graph = defaultdict(list)
     f = open(filename,'r')
     for line in f.readlines():
         line= line.strip('\n').split(' ')
         u,v = int(line[0]),int(line[1])
-        graph.setdefault(u,[])
-        graph.setdefault(v,[])
         graph[u].append(v)
         graph[v].append(u)
     return graph
@@ -42,8 +55,11 @@ def main(mydata):
         for i in label.keys():
             label[i] = getMost(data[i])     #修改label标签
             update(label,data)
-
     return label
 
-graph = readData()
-print(main(graph))
+if __name__== '__main__':
+    edgesFiles = anylizeDir("facebook").get('edges')
+    for filename in edgesFiles:
+        graph = readData(filename)
+        print("DATA FROM" + filename + " :")
+        print(main(graph))
