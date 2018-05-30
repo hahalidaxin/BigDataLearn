@@ -61,7 +61,7 @@ def MDC(listQ,graph):
                     graph.remove(v)
                     break
             if(not (flag==0)): break     #最低deg的节点不能删除 到达迭代终点
-        while(degDict[minDeg].__len__()==0): minDeg++
+        while(degDict[minDeg].__len__()==0): minDeg+=1
         if(minDeg>ansMaxDeg):
             ansMaxDeg = minDeg
             ansGraph = copy.copy(graph)
