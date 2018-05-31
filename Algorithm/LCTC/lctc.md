@@ -7,8 +7,8 @@
 
 * **TRUSSNESS**
 1) 图的trussness：t(H)=min<sub>e∈E(H)</sub>{sup<sub>H</sub>(e)}，用来衡量一个图的紧密程度
-2) 边的trussness：t(e)=max<sub>H⊆G^e∈E(H)</sub>{t(H)}，去掉e之后 的最紧密的子图 的紧密程度
-3) 点的trussness：t(v)=max<sub>H⊆G^v∈V(H)</sub>{t(H)}，去掉v之后 的最紧密的子图 的紧密程度
+2) 边的trussness：t(e)=max<sub>H⊆G^e∈E(H)</sub>{t(H)}， 包含边e的k最大的一个truss
+3) 点的trussness：t(v)=max<sub>H⊆G^v∈V(H)</sub>{t(H)}，包含v的k最大的一个truss
 
 * **QUERY DISTANCE**
 <br>dist<sub>G</sub>(u,v)定义为在图G中两点uv之间的最短路距离。
