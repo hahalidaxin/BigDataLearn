@@ -55,7 +55,8 @@
 ### K-truss Maintenance
 > 需要删除节点集合Vd之后任然返回一个k-truss
 > <br> 把所有的与Vd顶点相连的边放入S节点
-> <br> 对于每一条S中的边(u,v)，检查所有三角形uvw，sup(u,w)-1,sup(v,w)-1;对于每一条不属性S中的边，如果sup(e)<k-2则加入S；
+> <br> 对于每一条S中的边(u,v)，检查所有三角形uvw，sup(u,w)-1,sup(v,w)-1;对于每一条不属性S
+中的边，如果sup(e)<k-2则加入S；
 > <br> 在G中删除(u,v) 迭代终点S为空
 
 ## REFERENCES
