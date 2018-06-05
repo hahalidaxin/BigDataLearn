@@ -34,6 +34,7 @@ def readData(filename,type):
 
 def cedge(u,v):
     return (min(u,v),max(u,v))
+
 def trussDecomposition(graph):
     #利用truss-decomposition算法 计算grapn中每条边的trussness
     TE = {}
@@ -113,6 +114,7 @@ def FindG0(Q,graph):
 
 def BasicAlgorithm(Q,graph):
     G0=FindG0(Q,graph)
+
 
 if (__name__=="__main__"):
     res = anylizeDir("facebook")
