@@ -36,7 +36,7 @@
 <br>dist<sub>G</sub>(G,Q)<=diam(G)<=2dist<sub>G</sub>(G,Q)
 
 
-## ALGORITHM
+## ALGORITHM BASIC
 ### BASIC FRAMEWORK
 > **FIND G0** : 找到一个最大的联通k-truss，要去满足包含Q，且k最大
 > <br>l=0 ; 定义Gl = k-truss
@@ -58,6 +58,15 @@
 > <br> 对于每一条S中的边(u,v)，检查所有三角形uvw，sup(u,w)-1,sup(v,w)-1;对于每一条不属性S
 中的边，如果sup(e)<k-2则加入S；
 > <br> 在G中删除(u,v) 迭代终点S为空
+
+## ALGORITHM LCTC
+**Input:** 给定一个G(V,E)，k，Q   <br>
+**Ouput:** 要求返回一个满足覆盖所有Q而且子图个数<=k，同时k-truss最大的子图。
+1) 根据G构造一棵斯坦纳树，斯坦纳树应用模糊算法，是一棵覆盖所有的Q且相对dist最小的树
+2) 拓展斯坦纳树T成为新图Gt，拓展的边需要满足truss比T中最小边truss大。同时需要满足节点个数限制
+3) 分解算法计算G0，
+4) 在G0上应用BULKDELETE算法，通过删边构造k-truss，选择其中直径最小的k-truss
+
 
 ## REFERENCES
  X. Huang, L. V. Lakshmanan, J. X. Yu, and H. Cheng. Approximate closest

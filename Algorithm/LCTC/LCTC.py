@@ -3,6 +3,8 @@ import copy
 import queue
 from collections import defaultdict
 
+INF = 9999999
+
 def cedge(u,v):
     return (min(u,v),max(u,v))
 def EDGETRUSS(graph):
@@ -16,6 +18,7 @@ def EDGETRUSS(graph):
             if(edgeExist[e]==0):
                 edgeExist[e]=1
                 supE[cedge(u,v)] = len(set(graph[u])&set(graph[v]))
+    ansSupE = copy.copy(supE)
     #构造vert 按照sup顺序存储所有的边 其中bin与pos是辅助数组 使得update操作能够在常数时间内完成
     vert = sorted(supE.keys(),key=lambda x:supE[x])
     bin,pos = {},{}
@@ -59,13 +62,12 @@ def EDGETRUSS(graph):
             numEdge-=1
             lowestSup += 1
         k+=1
-    return TE
+    return ansSupE,TE
 
 class STEINER :
     def __init__(self,graph,Q):
-        self.INF = 99999999
+        self.INF = INF
         self.G = self.CONSTRUCT(graph,Q)
-        print(self.G)
 
     def SPFA(self,graph,Q):
         distG,inq,s= {},{},{}
@@ -170,72 +172,74 @@ class STEINER :
 
 def BFSEXTENDG(graph,oriGraph,szLimit,TE,kt):
     que = queue.Queue()
+    flag = defaultdict(int)
     for v in graph.keys():
         que.put(v)
+        for u,w in graph[v]:
+            flag[cedge(u,v)]=1
     while(not que.empty()):
         u = que.get()
         for v in oriGraph[u]:
             if(TE[cedge(u,v)]>=kt):
-                if(len(graph.keys())==szLimit):
+                if(len(graph.keys())>=szLimit):
                     return
                 else :
-                    graph[v].append((u,1))
-                    graph[u].append((v,1))
+                    if(not flag[cedge(u,v)]):
+                        graph[v].append((u,1))
+                        graph[u].append((v,1))
+                        flag[cedge(u,v)]=1
 
 
-def FINDG0(graph,oriGraph,Q,szLimit):
+def FINDG0(graph,oriGraph,Q,szLimit,TE):
     #返回一个最大的k-truss，使得k-truss包含Q且k最大
     #First 使用truss-decomposition算法计算所有边的trussness
     # 这里接收到的graph是一棵steinertree
 
-    TE = EDGETRUSS(oriGraph)
-
-    kt = 99999999
+    kt = INF
     for v in graph.keys():
         for u,w in graph[v]:
             if(v<u): kt = min(kt,TE[cedge(v,u)])
     BFSEXTENDG(graph,oriGraph,szLimit,TE,kt)
-    for v in graph:
-        graph[v] = sorted(graph[v],key=lambda x:-TE(cedge(x[0],v))
-    # 此时的graph是中间子图Gt
-    k = 99999999
+
+    for v in graph.keys():
+        graph[v] = sorted(graph[v],key=lambda x:-TE[cedge(x[0],v)])
+    k = INF
     for u in graph.keys():
-        for v,w in graph[v]:
-            k = min(k, TE[cedge(u, v)])
-            #tmpdict[cedge(u,v)]=TE[cedge(u,v)]
+        k = min(k,TE[cedge(u,graph[u][0][0])])
 
     S=defaultdict(set)
     V,Vedge=set(),set()
-    #vert = sorted(tmpdict.keys(),key=lambda x:-tmpdict[x])
-    S[k]=Q
+    S[k]=copy.copy(Q)
     G0 = defaultdict(list)
     while(connected(G0,Q)==False):
-        while(not (S[k] is None)):
-            v = S[k].pop()
-            if (v in V):
-                kmax = k+1
+        queK = queue.Queue()
+        for  v in S[k]: queK.put(v)
+        while(not (queK.empty())):
+            v = queK.get()
+            if (v in V): kmax = k+1
             else :
-                kmax = 9999999999
+                kmax = INF
                 V.add(v)
+                if(G0.get(v)==None):
+                    G0[v]=[]
             for u,w in graph[v]:
                 if(TE[cedge(u,v)]<k):break;
-                else :
-                    G0.add(cedge(u,v))
-                    if not(u in S[k]):
+                elif (TE[cedge(u,v)]<kmax) :
+                    if(not (cedge(u,v) in Vedge)):
                         Vedge.add(cedge(u,v))
-                        G0[u].append((v,1))
-                        G0[v].append((u,1))
+                        G0[u].append((v, 1))
+                        G0[v].append((u, 1))
+                    if not(u in S[k]):
+                        S[k].add(u)
+                        queK.put(u)
             l = 0
             for u,w in graph[v]:
                 if not (cedge(u,v) in Vedge):
-                    l=max(l,TE[cedge(u,v)])
+                    if(TE[cedge(u,v)>l]) :
+                        l = TE[cedge(u,v)]
+                        break
             S[l].add(v)
         k-=1
-    G0 = {}
-    for v in V: G0[v] = []
-    for u,v in Vedge:
-        G0[u].append((v,1))
-        G0[v].append((u,1))
     return G0
 
 def dfs(v,graph,color,flag):
@@ -246,21 +250,20 @@ def dfs(v,graph,color,flag):
 
 def connected(graph,Q):
     flag = defaultdict(int)
-    color = 0
-    for v in graph.keys():
+    color,count = 1,0
+    for v in Q:
         if(not flag[v]):
+            count+=1
+            if(count>=2) : break
             dfs(v,graph,color,flag)
             color += 1
-    count = {}
-    for v in Q:
-        count[flag[v]]=1
-    return True if count.__len__()==1 else False
+    return True if count==1 else False
 
-def MaintainKTruss(graph,L,supE):
+def MAINTAINKTRUSS(graph,L,supE,k):
     S = set()
     flag = defaultdict(int)
     for v in L:
-        for u in graph[v]:
+        for u,w in graph[v]:
             S.add(cedge(u,v))
     while(S.__len__()):
         u,v = S.pop()
@@ -269,32 +272,53 @@ def MaintainKTruss(graph,L,supE):
             e1,e2 = cedge(u,w),cedge(v,w)
             for ex in [e1,e2]:
                 supE[ex]-=1
-                if(supE[ex]<k-2): S = S|set(ex)
+                if(supE[ex]<k-2): S = S.add(ex)
         flag[cedge(u,v)]=1
-    ansG={}
+    ansG=defaultdict(list)
     for v in graph.keys():
         if(not v in L):
             ansG[v] = []
-        for u in graph[v]:
-            if(not flag(cedge(u,v))):
-                ansG[v].append(u)
+        for u,w in graph[v]:
+            if(not flag[cedge(u,v)]):
+                ansG[v].append((u,1))
     return ansG
-def BulkDelete(graph,Q):
-    d = 9999999
+def COMPUTEDIST(graph,Q):
+    distG = {}
+    for v in graph.keys(): distG[v]=INF
+    que = queue.Queue()
+    for v in Q:
+        distG[v]=0
+        que.put(v)
+    while(not que.empty()):
+        u = que.get()
+        for v,w in graph[u]:
+            if(distG[v]==INF):
+                distG[v]=distG[u]+1
+                que.put(v)
+    return distG
+def BUILKDELETE(graph,Q,supE):
+    d = INF
     l = 0
-    while(connectG(graph,Q)):
-        distG = computeDistG(graph,Q)
+    ansG = defaultdict(list)
+    while(connected(graph,Q)):
+        distG = COMPUTEDIST(graph,Q)
+        min_maxdistG = INF
         maxdistG = max(distG.values())
-        if(maxdistG<d):
-            d = maxdistG
-        L = {x for x in distG.keys() if distG[x]>=d-1}
-        graph = MaintainKTruss(graph,L)
+        if(maxdistG < min_maxdistG):
+            min_maxdistG = maxdistG
+            ansG = graph
+        if(maxdistG<d): d=maxdistG
+        L = {x for x in distG.keys() if distG[x]>=d}
+        graph = MAINTAINKTRUSS(graph,L,l,supE)
         l+=1
+    return ansG
+
 def LCTC(graph,szLimit,Q):
     steiner = STEINER(graph,Q)
-    G0 = FINDG0(steiner.G,graph,Q,szLimit)
-    ans = BulkDelete(G0,Q)
-    return ans
+    supE,TE = EDGETRUSS(graph)
+    G0 = FINDG0(steiner.G,graph,Q,szLimit,TE)
+    ansG = BUILKDELETE(G0,Q,supE)
+    return ansG
 
 def readData(filename):
     f = open(filename,'r')
