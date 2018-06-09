@@ -9,11 +9,11 @@
 ## ALGORITHM
 
 ### k-CORE DECOMPOSITION
-分解算法计算k-core
+分解算法计算coreG[v]，计算每个节点的deg，根据deg递增的顺序逐步删除节点
 
 ### CL-TREE BUILD
 构建一个CLtree树，所谓cltree树指的是每一个节点代表一个k-core，由于k-core与k+1-core的包含关系，形成一棵树，树的节点经过压缩，父节点的全部节点是其子节点的节点集合的并集。其中树的节点保存invertedList信息，记录一个节点中属性值对应的节点。
-总体思想是利用修改后的AFU（并查集变种）按照从底到顶的顺序构造整棵树
+<br> 从k大的节点开始构造，利用加了一个属性anchor的并查集进行树节点集合的合并。之所以追加anchor属性是为了节点之间的连边。
 
 ### INC-S
 利用CL-TREE简化操作
