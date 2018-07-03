@@ -70,7 +70,7 @@ class STEINER :
         distG,inq,s= {},{},{}
         father = {}
         self.maxTruss  = maxTruss = max(self.TE.values())
-        self.minTruss = minTruss = {}
+        self.minTruss = minTruss = defaultdict(int)
 
         for v in graph.keys():
             distG[v] = self.INF
@@ -86,13 +86,12 @@ class STEINER :
             u = que.get()
             inq[u]=0
             for v in graph[u]:
-                print(self.TE[cedge(u,v)],minTruss[v])
                 tmpminTruss = min(self.TE[cedge(u,v)],minTruss[v])
                 if(distG[u]+self.factor*(maxTruss-tmpminTruss)<distG[v]):                #此处有待修改
                     distG[v]=distG[u]+1
                     father[v]=u
                     s[v]=s[u]
-                    minTruss=tmpminTruss
+                    minTruss[v]=tmpminTruss
                     que.put(v)
                     inq[v]=1
         return s,distG,father
@@ -126,11 +125,12 @@ class STEINER :
         for v in graph.keys():
             for u,w in graph[v]:
                 distuv[cedge(u,v)]=w
+
         for v in self.s.keys():
             for u in oriGraph[v]:
                 if(self.s[u]<self.s[v]):
                     dist = distuv.get(cedge(self.s[u],self.s[v]))
-                    deltadist = min([self.TE[cedge(u,v)],self.minTruss[u],self.minTruss[v]])
+                    deltadist = self.factor*(self.maxTruss-min([self.TE[cedge(u,v)],self.minTruss[u],self.minTruss[v]]))
                     if(not(dist is None) and distG[v]+distG[u]+deltadist==dist):
                         #v->s[v] u->s[u]
                         for x in [u,v]:
@@ -140,6 +140,8 @@ class STEINER :
                                 x = father[x]
                         newG[u].append((v,1))
                         newG[v].append((u,1))
+        for v in newG.keys():
+            newG[v] = {}.fromkeys(newG[v]).keys()           #去掉重复的边
         return newG
     def DELETELEAF(self,graph,Q):
         flag = {}
@@ -157,7 +159,11 @@ class STEINER :
         self.s, self.distG, self.father = self.SPFA(graph, Q)
         triList = []
         for u in graph.keys():
+            if(self.s.get(u) is None) :
+                graph[u]=None                   #删除不能与Q中节点联通的节点
+                continue
             for v in graph[u]:
+                if(self.s.get(v) is None): continue
                 if (self.s[u] < self.s[v]):
                     deltadist = self.factor * (
                             self.maxTruss - min([self.minTruss[u], self.minTruss[v], self.TE[cedge(u, v)]]))
@@ -172,8 +178,8 @@ class STEINER :
         return G1
     def CONSTRUCT(self,graph,Q):
         G1 = self.GETG1(graph,Q)
-        G2 = self.KRUSKAL(G1)
-        G3 = self.EXPAND(G2,graph)
+        #G2 = self.KRUSKAL(G1)
+        G3 = self.EXPAND(G1,graph)
         G4 = self.KRUSKAL(G3)
         G5 = self.DELETELEAF(G4,Q)
         return G5
@@ -213,6 +219,7 @@ def FINDG0(graph,oriGraph,Q,szLimit,TE):
         graph[v] = sorted(graph[v],key=lambda x:-TE[cedge(x[0],v)])
     k = INF
     for u in graph.keys():
+        print(TE[cedge(u,graph[u][0][0])])
         k = min(k,TE[cedge(u,graph[u][0][0])])
 
     S=defaultdict(set)
@@ -221,7 +228,7 @@ def FINDG0(graph,oriGraph,Q,szLimit,TE):
     G0 = defaultdict(list)
     while(connected(G0,Q)==False):
         queK = queue.Queue()
-        for  v in S[k]: queK.put(v)
+        for v in S[k]: queK.put(v)
         while(not (queK.empty())):
             v = queK.get()
             if (v in V): kmax = k+1
@@ -231,7 +238,7 @@ def FINDG0(graph,oriGraph,Q,szLimit,TE):
                 if(G0.get(v)==None):
                     G0[v]=[]
             for u,w in graph[v]:
-                if(TE[cedge(u,v)]<k):break;
+                if(TE[cedge(u,v)]<k):break
                 elif (TE[cedge(u,v)]<kmax) :
                     if(not (cedge(u,v) in Vedge)):
                         Vedge.add(cedge(u,v))
@@ -332,8 +339,8 @@ def readData():
         graph[int(u)].append(int(v))
         graph[int(v)].append(int(u))
     ff = open(r"F:\桌面\CodeTraining\BigDataLearn\Algorithm\data\ego-Facebook\facebook\ques.txt",'r')
-    Q = {int(x) for x in ff.readline().strip().split(" ")}
-    return graph,INF,Q
+    Q = {int(x) for x in ff.readline().strip().split(" ") if graph[int(x)].__len__()}
+    return graph,40,Q
 
 graph,szLimit,Q = readData()
 print(LCTC(graph,szLimit,Q))
