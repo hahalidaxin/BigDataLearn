@@ -9,15 +9,14 @@ def cedge(u,v):
     return (min(u,v),max(u,v))
 def EDGETRUSS(graph):
     #利用Improved Truss Decomposition算法 计算grapn中每条边的trussness
-    TE = {}
-    supE= defaultdict(int)
+    supE = defaultdict(int)
     edgeExist = defaultdict(int)
     for u in graph.keys():
         for v in graph[u]:
             e = cedge(u,v)
             if(edgeExist[e]==0):
                 edgeExist[e]=1
-                supE[cedge(u,v)] = len(set(graph[u])&set(graph[v]))
+                supE[e] = len(set(graph[u])&set(graph[v]))         #这个地方可能会有点儿慢
     ansSupE = copy.copy(supE)
     #构造vert 按照sup顺序存储所有的边 其中bin与pos是辅助数组 使得update操作能够在常数时间内完成
     vert = sorted(supE.keys(),key=lambda x:supE[x])
@@ -34,17 +33,13 @@ def EDGETRUSS(graph):
     while(numEdge):
         while(lowestSup<tmpNumEdge and supE[vert[lowestSup]]<=k-2):
             u,v = e = vert[lowestSup]
-            if(not edgeExist[e]):
-                lowestSup+=1
-                numEdge-=1
-                continue
             for w in graph[u]:
                 e1 = cedge(v,w)
                 e2 = cedge(u,w)
                 if(edgeExist[e1] and edgeExist[e2]):
                     #维护vert 改变两条边在vert中的位置
                     for ex in [e1,e2]:
-                        pw = bin[supE[ex]] if (supE[vert[lowestSup]]!=supE[ex]) else lowestSup+1
+                        pw = max(bin[supE[ex]],lowestSup+1)
                         pu = pos[ex]
                         fe = vert[pw]
                         if(fe!=ex):
@@ -55,25 +50,32 @@ def EDGETRUSS(graph):
                         bin[supE[ex]]+=1
                         if (bin.get(supE[ex]-1) is None):
                             bin[supE[ex]-1]=pos[ex]
-
                         supE[ex]-=1
             TE[e]=k
             edgeExist[e]=0
             numEdge-=1
+            if(numEdge==0) : break
             lowestSup += 1
         k+=1
     return ansSupE,TE
 
 class STEINER :
-    def __init__(self,graph,Q):
+    def __init__(self,TE,graph,Q):
+        self.factor = 3
         self.INF = INF
+        self.TE = TE
         self.G = self.CONSTRUCT(graph,Q)
 
     def SPFA(self,graph,Q):
         distG,inq,s= {},{},{}
         father = {}
+        self.maxTruss  = maxTruss = max(self.TE.values())
+        self.minTruss = minTruss = {}
+
         for v in graph.keys():
             distG[v] = self.INF
+            minTruss[v]=maxTruss
+
         que = queue.Queue()
         for q in Q:
             father[q]=q
@@ -84,10 +86,13 @@ class STEINER :
             u = que.get()
             inq[u]=0
             for v in graph[u]:
-                if(distG[u]+1<distG[v]):
+                print(self.TE[cedge(u,v)],minTruss[v])
+                tmpminTruss = min(self.TE[cedge(u,v)],minTruss[v])
+                if(distG[u]+self.factor*(maxTruss-tmpminTruss)<distG[v]):                #此处有待修改
                     distG[v]=distG[u]+1
                     father[v]=u
                     s[v]=s[u]
+                    minTruss=tmpminTruss
                     que.put(v)
                     inq[v]=1
         return s,distG,father
@@ -114,7 +119,6 @@ class STEINER :
         return ansG
 
     def EXPAND(self,graph,oriGraph):
-        flag = defaultdict(int)
         newG = defaultdict(list)
         distG = self.distG
         father = self.father
@@ -126,13 +130,13 @@ class STEINER :
             for u in oriGraph[v]:
                 if(self.s[u]<self.s[v]):
                     dist = distuv.get(cedge(self.s[u],self.s[v]))
-                    if(not(dist is None) and distG[v]+distG[u]+1==dist):
+                    deltadist = min([self.TE[cedge(u,v)],self.minTruss[u],self.minTruss[v]])
+                    if(not(dist is None) and distG[v]+distG[u]+deltadist==dist):
                         #v->s[v] u->s[u]
                         for x in [u,v]:
-                            while(distG[x]):
-                                if(x!=father[x]):
-                                    newG[x].append((father[x],1))
-                                    newG[father[x]].append((x,1))
+                            while (x != father[x]):
+                                newG[x].append((father[x], 1))
+                                newG[father[x]].append((x, 1))
                                 x = father[x]
                         newG[u].append((v,1))
                         newG[v].append((u,1))
@@ -149,21 +153,25 @@ class STEINER :
                         newG[u].append((v,w))
                         newG[v].append((u,w))
         return newG
-    def CONSTRUCT(self,graph,Q):
-        # 构造G1 #这里并没有考虑论文中所说的修改distG'的问题
-        self.s,self.distG,self.father = self.SPFA(graph,Q)
+    def GETG1(self,graph,Q):
+        self.s, self.distG, self.father = self.SPFA(graph, Q)
         triList = []
         for u in graph.keys():
             for v in graph[u]:
-                if(self.s[u]<self.s[v]):
-                    triList.append((self.s[u],self.s[v],self.distG[u]+self.distG[v]+1))
+                if (self.s[u] < self.s[v]):
+                    deltadist = self.factor * (
+                            self.maxTruss - min([self.minTruss[u], self.minTruss[v], self.TE[cedge(u, v)]]))
+                    triList.append((self.s[u], self.s[v], self.distG[u] + self.distG[v] + deltadist))
         G1 = defaultdict(list)
         triList = sorted(triList, key=lambda x: x)
         for i in range(triList.__len__()):
-            u,v,w = triList[i]
-            if(i==0 or (u,v)!=triList[i-1][0:2]):
-                G1[u].append((v,w))
-                G1[v].append((u,w))
+            u, v, w = triList[i]
+            if (i == 0 or (u, v) != triList[i - 1][0:2]):
+                G1[u].append((v, w))
+                G1[v].append((u, w))
+        return G1
+    def CONSTRUCT(self,graph,Q):
+        G1 = self.GETG1(graph,Q)
         G2 = self.KRUSKAL(G1)
         G3 = self.EXPAND(G2,graph)
         G4 = self.KRUSKAL(G3)
@@ -175,8 +183,7 @@ def BFSEXTENDG(graph,oriGraph,szLimit,TE,kt):
     flag = defaultdict(int)
     for v in graph.keys():
         que.put(v)
-        for u,w in graph[v]:
-            flag[cedge(u,v)]=1
+        flag[v]=1
     while(not que.empty()):
         u = que.get()
         for v in oriGraph[u]:
@@ -184,10 +191,11 @@ def BFSEXTENDG(graph,oriGraph,szLimit,TE,kt):
                 if(len(graph.keys())>=szLimit):
                     return
                 else :
-                    if(not flag[cedge(u,v)]):
+                    if(flag[v]==0):
                         graph[v].append((u,1))
                         graph[u].append((v,1))
-                        flag[cedge(u,v)]=1
+                        flag[v]=1
+                        que.put(v)
 
 
 def FINDG0(graph,oriGraph,Q,szLimit,TE):
@@ -232,12 +240,7 @@ def FINDG0(graph,oriGraph,Q,szLimit,TE):
                     if not(u in S[k]):
                         S[k].add(u)
                         queK.put(u)
-            l = 0
-            for u,w in graph[v]:
-                if not (cedge(u,v) in Vedge):
-                    if(TE[cedge(u,v)>l]) :
-                        l = TE[cedge(u,v)]
-                        break
+            l = TE[cedge(v,graph[v][0][0])]
             S[l].add(v)
         k-=1
     return G0
@@ -276,24 +279,27 @@ def MAINTAINKTRUSS(graph,L,supE,k):
         flag[cedge(u,v)]=1
     ansG=defaultdict(list)
     for v in graph.keys():
-        if(not v in L):
+        if(not (v in L)):
             ansG[v] = []
-        for u,w in graph[v]:
-            if(not flag[cedge(u,v)]):
-                ansG[v].append((u,1))
+            for u,w in graph[v]:
+                if(not flag[cedge(u,v)]):
+                    ansG[v].append((u,1))
     return ansG
 def COMPUTEDIST(graph,Q):
     distG = {}
+    flag = defaultdict(int)
     for v in graph.keys(): distG[v]=INF
     que = queue.Queue()
     for v in Q:
         distG[v]=0
+        flag[v]=1
         que.put(v)
     while(not que.empty()):
         u = que.get()
         for v,w in graph[u]:
-            if(distG[v]==INF):
+            if(distG[v]==INF and flag[v]==0):
                 distG[v]=distG[u]+1
+                flag[v]=1
                 que.put(v)
     return distG
 def BUILKDELETE(graph,Q,supE):
@@ -302,34 +308,32 @@ def BUILKDELETE(graph,Q,supE):
     ansG = defaultdict(list)
     while(connected(graph,Q)):
         distG = COMPUTEDIST(graph,Q)
-        min_maxdistG = INF
         maxdistG = max(distG.values())
-        if(maxdistG < min_maxdistG):
-            min_maxdistG = maxdistG
-            ansG = graph
-        if(maxdistG<d): d=maxdistG
+        if(maxdistG<d):
+            d=maxdistG
+            ansG = copy.copy(graph)
         L = {x for x in distG.keys() if distG[x]>=d}
         graph = MAINTAINKTRUSS(graph,L,l,supE)
         l+=1
     return ansG
 
 def LCTC(graph,szLimit,Q):
-    steiner = STEINER(graph,Q)
-    supE,TE = EDGETRUSS(graph)
+    supE, TE = EDGETRUSS(graph)
+    steiner = STEINER(TE,graph,Q)
     G0 = FINDG0(steiner.G,graph,Q,szLimit,TE)
     ansG = BUILKDELETE(G0,Q,supE)
     return ansG
 
-def readData(filename):
-    f = open(filename,'r')
-    N = int(f.readline())
-    graph = {}
-    for i in range(N):
-        str = f.readline().strip().split()
-        graph[int(str[0])]=[int(x) for x in str[1:]]
-    szLimit = int(f.readline())
-    Q = {int(x) for x in f.readline().strip().split(" ")}
-    return graph,szLimit,Q
+def readData():
+    f = open("../data/ego-Facebook/facebook/0.edges",'r')
+    graph = defaultdict(list)
+    for line in f.readlines():
+        u,v = line.strip().split(" ")
+        graph[int(u)].append(int(v))
+        graph[int(v)].append(int(u))
+    ff = open(r"F:\桌面\CodeTraining\BigDataLearn\Algorithm\data\ego-Facebook\facebook\ques.txt",'r')
+    Q = {int(x) for x in ff.readline().strip().split(" ")}
+    return graph,INF,Q
 
-graph,szLimit,Q = readData("data.txt")
+graph,szLimit,Q = readData()
 print(LCTC(graph,szLimit,Q))

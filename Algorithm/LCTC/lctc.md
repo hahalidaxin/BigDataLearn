@@ -52,7 +52,7 @@
 > <br> 访问完所有相邻节点之后，将v加入到Sl，l=max{t(u,v),u是相邻节点，t(u,v)<k}
 > <br> 检查在G0中Q是否已经联通，如果联通则迭代结束，否则，k-=1，继续迭代;
 
-### K-truss Maintenance
+### K-TRUSS MAINTAIN
 > 需要删除节点集合Vd之后任然返回一个k-truss
 > <br> 把所有的与Vd顶点相连的边放入S节点
 > <br> 对于每一条S中的边(u,v)，检查所有三角形uvw，sup(u,w)-1,sup(v,w)-1;对于每一条不属性S

@@ -111,6 +111,7 @@ venv.bak/
 #DATA
 facebook
 data.txt
+data/
 
 #Test
 test.py
