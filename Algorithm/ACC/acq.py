@@ -1,23 +1,34 @@
 import os
+import sys
 import copy
 from collections import defaultdict
 
+sys.path.append(r"F:\桌面\CodeTraining\BigDataLearn\Algorithm")
+import CommunitySearch as CS
+
 #分解法求解coreG数组
 def CORES(graph):
-    pos={}
-    bin={}
-    deg={}
-    for u in graph.keys():
-        deg[u] = graph[u].__len__()
-    vert = sorted(graph.keys(),key = lambda x:deg[x])
-    lastdeg = -1
-    for i in range(vert.__len__()):
+    bin,deg,pos,vert={},{},{},{}
+    md = 0
+    for v in graph.keys():
+        deg[v] = graph[v].__len__()
+        if(deg[v]>md): md=deg[v]
+    for d in range(0,md+1): bin[d]=0
+    for v in graph.keys(): bin[deg[v]]+=1
+    start = 1
+    for d in range(0,md+1):
+        num = bin[d]
+        bin[d]=start
+        start+=num
+    for v in graph.keys():
+        pos[v]=bin[deg[v]]
+        vert[pos[v]]=v
+        bin[deg[v]]+=1
+    for d in range(md,0,-1):
+        bin[d]=bin[d-1]
+    bin[0]=1
+    for i in range(1,len(vert)+1):
         v = vert[i]
-        pos[v]=i
-        if(lastdeg != deg[v]):
-            lastdeg = deg[v]
-            bin[deg[v]] = i
-    for v in vert:
         for u in graph[v]:
             if(deg[u]>deg[v]) :
                 du = deg[u]
@@ -153,17 +164,20 @@ class CL_TREE:
             ans = set()
             cmax = max(R.keys())
             for i in range(c,cmax+1):
+                if(R.get(i) is None): continue
                 root = R[i]
+                flag = 0
                 tans = set()
                 for s in St:
-                    if (tans.__len__() == 0):
+                    if (flag == 0):
+                        flag = 1
                         tans = root.invertedList[s]
                     else:
                         tans = tans & root.invertedList[s]
                 ans = ans|tans
             return ans
 def buildSubgraph(graph,vertices):
-    newG = {}
+    newG = defaultdict(list)
     for v in vertices:
         newG[v] = []
         for u in graph[v]:
@@ -185,7 +199,9 @@ def INCS(G,Property,cltree,q,k,S):
     l = 0
     FAI = []
     for p in S:
-        if(Property[q].count(p)): FAI.append((set(p),k))
+        stt = set()
+        stt.add(p)
+        if(Property[q].count(p)): FAI.append((stt,k))
     POSY = defaultdict(list)
     while True:
         l += 1
@@ -213,8 +229,28 @@ def INCS(G,Property,cltree,q,k,S):
                             FAI.append((st,c))
         else :
             break
-    return POSY[l-1]
-
+    print(POSY[l-1])
+    '''
+    #dfs(cltree.root)
+    #在这里进行了选择，永远选择第一个构造答案
+    S,c = POSY[l-1][0]
+    ans = set()
+    cmax = max(R.keys())
+    for i in range(c,cmax+1):
+        rt = R[i]
+        tans = set()
+        flag = 0
+        for prop in S:
+            if(flag==0):
+                flag = 1
+                tans = rt.invertedList[prop]
+            else:
+                tans = tans & rt.invertedList[prop]
+                if(rt.invertedList[prop].__len__()==0):
+                    tans = set()
+        ans=ans|tans
+    return ans
+    '''
 def readData(filename):
     f = open(filename,'r')
     N = int(f.readline())
@@ -241,8 +277,8 @@ def readData(filename):
     return graph,property,q,k,S
 
 flag = defaultdict(int)
-'''
-def dfs(rt):
+
+def test_dfs(rt):
     print("vertextSet: ",rt.vertexSet)
     print("invertedList: ",rt.invertedList)
     print("coreNum",rt.coreNum)
@@ -252,10 +288,22 @@ def dfs(rt):
     flag[rt]=1
     for v in rt.childList:
         if(not flag[v]):
-            dfs(v)
-'''
+            test_dfs(v)
+
 if __name__=="__main__":
-    graph,property,q,k,S = readData("data.txt")
+
+    print(CS.graph_information)
+    print(CS.tempt_nodes_information)
+    G = CS.tempt_nodes_information
+
+    #graph,property,q,k,S = readData("data.txt")
+    graph = {v:G[v][0] for v in G.keys()}
+    property = {v:G[v][1] for v in G.keys()}
+    print(property)
     cltree = CL_TREE(graph,property)
-    POSY = INCS(graph,property,cltree,q,k,S)
-    print(POSY)
+    test_dfs(cltree.root)
+    #cltree = CL_TREE(graph,property)
+    S = set([93, 78, 53, 157, 142])
+    ans = INCS(graph,property,cltree,"71",1,S)
+    #dfs(cltree.root)
+    print(ans)
