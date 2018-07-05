@@ -140,14 +140,14 @@ class CL_TREE:
         def tFindR(self,root,flag,q,end,top,ans):
             flag[root]=1
             if (q in root.vertexSet):
-                if (end <= root.coreNum <= top):
-                    ans[root.coreNum] = root
-                    return True
+                ans[root.coreNum] = root
+                return True
             for v in root.childList:
-                if (not (flag[v]) and self.tFindR(v,flag, q, end,top, ans)):
-                    if (end <= root.coreNum <= top):
+                if(not flag[v]):
+                    resBool = self.tFindR(v,flag,q,end,top,ans)
+                    if(resBool and end<=root.coreNum<=top):
                         ans[root.coreNum] = root
-                    return True
+                    if(resBool): return True
             return False
         def findGSt(self,R,St,c):
             ans = set()
@@ -167,8 +167,9 @@ def buildSubgraph(graph,vertices):
     for v in vertices:
         newG[v] = []
         for u in graph[v]:
-            if(vertices.count(u)):
+            if(u<v and vertices.count(u)):
                 newG[v].append(u)
+                newG[u].append(v)
     return newG
 
 def findcoreGkExist(graph,k):
@@ -188,26 +189,28 @@ def INCS(G,Property,cltree,q,k,S):
     POSY = defaultdict(list)
     while True:
         l += 1
-        for turp in FAI:
-            St,c = turp
+        for St,c in FAI:
             GS = list(cltree.findGSt(R,St,c))
             newG = buildSubgraph(graph, GS)
-            m,n = 0,newG.__len__()
-            for v in newG.keys():
-                m+=newG[v].__len__()
-            if(not (m-n<((k*k-k/2)/2-1))) :
+            m,n = 0,newG.keys().__len__()
+            m = (sum(newG[v].__len__() for v in newG.keys()))/2
+            if(not (m-n<((k**2-k)/2-1))) :
                 maxcoreG = findcoreGkExist(newG,k)
                 if(maxcoreG!=-1) : POSY[l].append((St,maxcoreG))
+
         if(POSY[l].__len__()):
             FAI=[]
             posi=POSY[l]
-            fai = set()
-            for si,corei in posi:
-                for sj,corej in posi:
-                    st = si | sj
-                    if (len(si) == len(sj) and len(st) > len(si) + 1):
-                        c = max(corei,corej)
-                        FAI.add((st,c))
+            for i in range(posi.__len__()):
+                si,corei = posi[i]
+                for j in range(i+1,posi.__len__()):
+                    sj,corej = posi[j]
+                    if(len(si)==len(sj)):
+                        st = si | sj
+                        if (len(st) == len(si) + 1):
+                            #这里没有利用lemma1进行剪枝
+                            c = max(corei,corej)
+                            FAI.append((st,c))
         else :
             break
     return POSY[l-1]
@@ -236,6 +239,21 @@ def readData(filename):
     str = line.strip().split(" ")
     S = list(str)
     return graph,property,q,k,S
+
+flag = defaultdict(int)
+'''
+def dfs(rt):
+    print("vertextSet: ",rt.vertexSet)
+    print("invertedList: ",rt.invertedList)
+    print("coreNum",rt.coreNum)
+    #print(rt)
+    #print("childList",rt.childList)
+    print("")
+    flag[rt]=1
+    for v in rt.childList:
+        if(not flag[v]):
+            dfs(v)
+'''
 if __name__=="__main__":
     graph,property,q,k,S = readData("data.txt")
     cltree = CL_TREE(graph,property)

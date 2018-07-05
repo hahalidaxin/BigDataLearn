@@ -116,3 +116,6 @@ data/
 #Test
 test.py
 
+#OurAlgorithm 
+CommunitySearch.py
+
