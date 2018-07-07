@@ -7,6 +7,8 @@
 3) 要求Gq中的点共享的存在于S中的属性尽可能多
 
 ## ALGORITHM
+**input:** 给定G(with property)，q，K，S <br>
+**output:** 一个共享S中尽可能多、关键字的k>=K的、包含指定节点q的k-Core
 
 ### k-CORE DECOMPOSITION
 分解算法计算coreG[v]，计算每个节点的deg，根据deg递增的顺序逐步删除节点
