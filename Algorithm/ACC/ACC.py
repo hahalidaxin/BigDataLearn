@@ -3,9 +3,6 @@ import sys
 import copy
 from collections import defaultdict
 
-sys.path.append(r"F:\桌面\CodeTraining\BigDataLearn\Algorithm")
-import CommunitySearch as CS
-
 
 # 分解法求解coreG数组
 def CORES(graph):
@@ -355,30 +352,17 @@ def test_dfs(rt):
         if (not flag[v]):
             test_dfs(v)
 
+acc_maindef = 123
+def ACC_MAIN(graph, property, q, k, S):
+    cltree = CL_TREE(graph, property)
+    ans = INCS(graph, property, cltree, q, k, S)
+    return ans
 
-def ACC_MAIN():
-    '''
-     # test for small data
-        graph,property = readData("F:\桌面\CodeTraining\BigDataLearn\Algorithm\ACC\data.txt")
-        cltree = CL_TREE(graph,property)
-        print("coreG")
-        for v in graph.keys():
-            print(v,cltree.coreG[v])
-        test_dfs(cltree.root)
-        S = set(['q', 'a'])
-        q = 5
-        ans = INCS(graph, property, cltree, q, 4, S)
-        print("ans", ans)
-    '''
 
+if __name__ == "__main__":
     G = CS.tempt_nodes_information
     graph = {v: G[v][0] for v in G.keys()}
     property = {v: G[v][1] for v in G.keys()}
     cltree = CL_TREE(graph, property)
     group = CS.graph_information['Groups']['circle20']
-    ans = INCS(graph, property, cltree, '293', 1, group[1])
-    return ans
-
-
-if __name__ == "__main__":
-    print(ACC_MAIN())
+    ACC_MAIN(graph,property,group[0][0],1,group[1])

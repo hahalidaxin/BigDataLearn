@@ -109,7 +109,7 @@ def FindG0(Q,graph):
                 if(cedge(u,v) is not in G0);
                     l=max(l,TE[cedge(u,v)])
             S[l].add(v)
-        k-=1
+        k -= 1
     return G0
 
 def BasicAlgorithm(Q,graph):

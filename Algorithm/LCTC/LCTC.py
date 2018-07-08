@@ -1,12 +1,10 @@
+import random
 import copy
 import queue
 from collections import defaultdict
 import sys
-sys.path.append(r"F:\桌面\CodeTraining\BigDataLearn\Algorithm")
-import CommunitySearch as CS
 
 INF = 9999999
-
 
 def cedge(u, v):
     return (min(u, v), max(u, v))
@@ -21,9 +19,10 @@ def EDGETRUSS(graph):
             e = cedge(u, v)
             if 0 == edgeExist[e]:
                 edgeExist[e] = 1
-                if graph.get(v) is None:        # 使用defaultdict的后遗症
+                if graph.get(v) is None:  # 使用defaultdict的后遗症
                     supE[e] = 0
-                else: supE[e] = len(set(graph[u]) & set(graph[v]))  # 这个地方可能会有点儿慢
+                else:
+                    supE[e] = len(set(graph[u]) & set(graph[v]))  # 这个地方可能会有点儿慢
     ansSupE = copy.copy(supE)
     # 构造vert 按照sup顺序存储所有的边 其中bin与pos是辅助数组 使得update操作能够在常数时间内完成
     vert = sorted(supE.keys(), key=lambda x: supE[x])
@@ -90,9 +89,10 @@ class STEINER:
             que.put(q)
             distG[q], inq[q] = 0, 1
             s[q] = q
-        while (not que.empty()):
+        while not que.empty():
             u = que.get()
             inq[u] = 0
+            if graph.get(u) is None: continue
             for v in graph[u]:
                 tmpminTruss = min(self.TE[cedge(u, v)], minTruss[v])
                 if distG[u] + self.factor * (maxTruss - tmpminTruss) < distG[v]:
@@ -126,6 +126,7 @@ class STEINER:
                 fa[x] = y
                 ansG[u].append((v, w))
                 ansG[v].append((u, w))
+        if len(graph) == 1: ansG[list(graph.keys())[0]] = []
         return ansG
 
     def EXPAND(self, graph, oriGraph):
@@ -138,11 +139,12 @@ class STEINER:
                 distuv[cedge(u, v)] = w
 
         for v in self.s.keys():
+            if oriGraph.get(v) is None: continue
             for u in oriGraph[v]:
                 if (self.s[u] < self.s[v]):
                     dist = distuv.get(cedge(self.s[u], self.s[v]))
                     deltadist = self.factor * (
-                                self.maxTruss - min([self.TE[cedge(u, v)], self.minTruss[u], self.minTruss[v]]))
+                            self.maxTruss - min([self.TE[cedge(u, v)], self.minTruss[u], self.minTruss[v]]))
                     if (not (dist is None) and distG[v] + distG[u] + deltadist == dist):
                         # v->s[v] u->s[u]
                         for x in [u, v]:
@@ -152,6 +154,7 @@ class STEINER:
                                 x = father[x]
                         newG[u].append((v, 1))
                         newG[v].append((u, 1))
+        if len(graph) == 1: newG[list(graph.keys())[0]] = []
         for v in newG.keys():
             newG[v] = {}.fromkeys(newG[v]).keys()  # 去掉重复的边
         return newG
@@ -162,18 +165,18 @@ class STEINER:
             flag[v] = 0 if (graph[v].__len__() == 1 and not (v in Q)) else 1
         newG = defaultdict(list)
         for v in graph.keys():
-            if (flag[v]):
+            if flag[v]:
+                newG[v] = []
                 for u, w in graph[v]:
-                    if (flag[u] and u < v):
-                        newG[u].append((v, w))
-                        newG[v].append((u, w))
+                    if flag[u]:
+                        newG[v].append((u, 1))
         return newG
 
     def GETG1(self, graph, Q):
         self.s, self.distG, self.father = self.SPFA(graph, Q)
         triList = []
         for u in graph.keys():
-            if (self.s.get(u) is None):
+            if self.s.get(u) is None:
                 graph[u] = None  # 删除不能与Q中节点联通的节点
                 continue
             for v in graph[u]:
@@ -189,6 +192,7 @@ class STEINER:
             if (i == 0 or (u, v) != triList[i - 1][0:2]):
                 G1[u].append((v, w))
                 G1[v].append((u, w))
+        if len(Q) == 1: G1[Q[0]] = []
         return G1
 
     def CONSTRUCT(self, graph, Q):
@@ -197,7 +201,15 @@ class STEINER:
         G3 = self.EXPAND(G1, graph)
         G4 = self.KRUSKAL(G3)
         G5 = self.DELETELEAF(G4, Q)
-        return G5
+        flag = False
+        for v in Q:
+            if G5.get(v) is None:
+                flag = True
+                break
+        if flag:
+            return None
+        else:
+            return G5
 
 
 def BFSEXTENDG(graph, oriGraph, szLimit, TE, kt):
@@ -230,19 +242,36 @@ def FINDG0(graph, oriGraph, Q, szLimit, TE):
     for v in graph.keys():
         for u, w in graph[v]:
             if (v < u): kt = min(kt, TE[cedge(v, u)])
+    if len(graph) == 1: kt = 0
     BFSEXTENDG(graph, oriGraph, szLimit, TE, kt)
 
     for v in graph.keys():
         graph[v] = sorted(graph[v], key=lambda x: -TE[cedge(x[0], v)])
     k = INF
     for u in graph.keys():
-        k = min(k, TE[cedge(u, graph[u][0][0])])
+        if len(graph[u]):
+            k = min(k, TE[cedge(u, graph[u][0][0])])
+    '''
+    label = defaultdict(int)
+    color=1
+    for v in graph.keys():
+        if not label[v]:
+            dfs(v, graph, color, label)
+            color += 1
 
+    print("color of Q: ")
+    for v in Q:
+        print(v,label[v])
+    '''
     S = defaultdict(set)
     V, Vedge = set(), set()
     S[k] = set(copy.copy(Q))
     G0 = defaultdict(list)
     while connected(G0, Q) is False:
+        '''
+        if k == 0:
+            print("G0 is :", str(G0))
+        '''
         queK = queue.Queue()
         for v in S[k]: queK.put(v)
         while not queK.empty():
@@ -265,9 +294,13 @@ def FINDG0(graph, oriGraph, Q, szLimit, TE):
                     if not u in S[k]:
                         S[k].add(u)
                         queK.put(u)
-
-            l = TE[cedge(v, graph[v][0][0])]
-            S[l].add(v)
+            if len(graph[v]):
+                for i,(u,w) in enumerate(graph[v]):
+                    if not cedge(u,v) in Vedge:
+                        break
+                if i < len(graph[v]):
+                    l = TE[cedge(v, graph[v][i][0])]
+                    S[l].add(v)
         k -= 1
     return G0
 
@@ -280,14 +313,16 @@ def dfs(v, graph, color, flag):
 
 
 def connected(graph, Q):
+    if len(graph) == 0: return False
     flag = defaultdict(int)
     color, count = 1, 0
     for v in Q:
-        if (not flag[v]):
+        if not flag[v]:
             count += 1
-            if (count >= 2): break
+            if count >= 2: break
             dfs(v, graph, color, flag)
             color += 1
+    if len(graph) == 0: return False
     return True if count == 1 else False
 
 
@@ -336,16 +371,17 @@ def COMPUTEDIST(graph, Q):
     return distG
 
 
-def BUILKDELETE(graph, Q, supE,TE):
+def BUILKDELETE(graph, Q, supE, TE):
     d = INF
     ansG = defaultdict(list)
     K = INF
     for v in graph.keys():
-        for u,w in graph[v]:
-            K = min(K,TE[cedge(u,v)])
+        for u, w in graph[v]:
+            K = min(K, TE[cedge(u, v)])
     while connected(graph, Q):
         distG = COMPUTEDIST(graph, Q)
         maxdistG = max(distG.values())
+        if maxdistG == 0: break
         if maxdistG < d:
             d = maxdistG
             ansG = copy.copy(graph)
@@ -353,8 +389,29 @@ def BUILKDELETE(graph, Q, supE,TE):
         graph = MAINTAINKTRUSS(graph, L, K, copy.copy(supE))
     return ansG
 
-
+lctc_def = 123
 def LCTC_MAIN(graph, szLimit, Q):
+    flag = defaultdict(int)
+    for v in Q:
+        if graph.get(v) is None:
+            flag[v] = 1
+    for v in flag.keys():
+        Q.remove(v)
+    '''
+    color = 1
+    newG = defaultdict(list)
+    for u in graph.keys():
+        if graph.get(u) is None: continue
+        for v in graph[u]:
+            newG[u].append((v, 1))
+    print("flag of Qs")
+    for v in graph.keys():
+        if not flag[v]:
+            dfs(v, newG, color, flag)
+            color += 1
+    for v in Q:
+        print(flag[v])
+    '''
     supE, TE = EDGETRUSS(graph)
     '''
     print("TE")
@@ -364,8 +421,9 @@ def LCTC_MAIN(graph, szLimit, Q):
                 print((u, v), TE[cedge(u, v)])
     '''
     steiner = STEINER(copy.copy(TE), graph, Q)
+    if steiner.G is None or len(steiner.G) == 0: return []
     G0 = FINDG0(steiner.G, graph, Q, szLimit, copy.copy(TE))
-    ansG = BUILKDELETE(G0, Q, supE,copy.copy(TE))
+    ansG = BUILKDELETE(G0, Q, supE, copy.copy(TE))
     return list(ansG.keys())
 
 
@@ -384,7 +442,7 @@ if __name__ == "__main__":
     # graph, szLimit, Q = readData()
     G = CS.tempt_nodes_information
     graph = {v: G[v][0] for v in G.keys()}
-    group = CS.graph_information['Groups']['circle0']
-    print(group[0][0:10])
-    print(LCTC_MAIN(graph, 40, group[0][0:6]))
+    x = 0
+    group = CS.graph_information['Groups']['circle2']
+    print(LCTC_MAIN(graph, 40, ['147', '140', '99', '270', '116']))
     # print(CS.graph_information)
