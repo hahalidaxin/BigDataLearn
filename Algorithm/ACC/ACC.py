@@ -2,6 +2,8 @@ import os
 import sys
 import copy
 from collections import defaultdict
+import random
+# import CommunitySearch as CS
 
 
 # 分解法求解coreG数组
@@ -238,10 +240,15 @@ def findcoreGkExist(graph, k, q):
         coreGk = min(CORES(newG).values())
         return coreGk if coreGk >= k else -1, ls
 
+def test_s(s,posy):
+    ls = list(s)
+    for i in range(len(ls)):
+        ts = set(ls[:i]+ls[i+1:])
+        if not ts in posy:
+            return False
+    return True
 
 # 主算法 Inc-S算法 递增序、空间友好的算法
-
-
 def INCS(G, Property, cltree, q, k, S):
     # x寻找一条路径，这条路径上包含有q节点，而且满足路径上节点的coreG位于[end,top]之间
 
@@ -277,12 +284,15 @@ def INCS(G, Property, cltree, q, k, S):
                 si, corei = posi[i]
                 for j in range(i + 1, posi.__len__()):
                     sj, corej = posi[j]
-                    if (len(si) == len(sj)):
+                    if len(si) == len(sj):
                         st = si | sj
                         if len(st) == len(si) + 1:
                             # 这里没有利用lemma1进行剪枝
-                            c = max(corei, corej)
-                            FAI.append((st, c))
+                            tposy = [x[0] for x in posi]
+                            if test_s(st,tposy):
+                                c = max(corei, corej)
+                                if not (st,c) in FAI:
+                                    FAI.append((st, c))
         else:
             break
     if POSY.get(l - 1) is None: return []  # 没有找到符合要求的群组
@@ -354,8 +364,13 @@ def test_dfs(rt):
 
 acc_maindef = 123
 def ACC_MAIN(graph, property, q, k, S):
+    S = list(set(S)&set(property[q]))
+    if len(S) == 0:
+        S = set(random.sample(property[q],min(5,len(property[q]))))
+    # print(property['193'])
     cltree = CL_TREE(graph, property)
     ans = INCS(graph, property, cltree, q, k, S)
+    if len(ans)==0: ans = [q]
     return ans
 
 
@@ -364,5 +379,5 @@ if __name__ == "__main__":
     graph = {v: G[v][0] for v in G.keys()}
     property = {v: G[v][1] for v in G.keys()}
     cltree = CL_TREE(graph, property)
-    group = CS.graph_information['Groups']['circle20']
-    ACC_MAIN(graph,property,group[0][0],1,group[1])
+    group = CS.graph_information['Groups']['circle0']
+    print(ACC_MAIN(graph, property, '193', 1, [93]))
