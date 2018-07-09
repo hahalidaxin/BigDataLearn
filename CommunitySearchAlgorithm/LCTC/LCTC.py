@@ -2,7 +2,9 @@ import random
 import copy
 import queue
 from collections import defaultdict
+from collections import Counter
 import sys
+# import CommunitySearch as CS
 
 INF = 9999999
 
@@ -308,7 +310,7 @@ def FINDG0(graph, oriGraph, Q, szLimit, TE):
 def dfs(v, graph, color, flag):
     flag[v] = color
     for u, w in graph[v]:
-        if (not flag[u]):
+        if not flag[u]:
             dfs(u, graph, color, flag)
 
 
@@ -390,36 +392,29 @@ def BUILKDELETE(graph, Q, supE, TE):
     return ansG
 
 lctc_def = 123
-def LCTC_MAIN(graph, szLimit, Q):
+def prepareforq(Q,graph):
     flag = defaultdict(int)
     for v in Q:
         if graph.get(v) is None:
             flag[v] = 1
     for v in flag.keys():
         Q.remove(v)
-    '''
-    color = 1
     newG = defaultdict(list)
-    for u in graph.keys():
-        if graph.get(u) is None: continue
-        for v in graph[u]:
-            newG[u].append((v, 1))
-    print("flag of Qs")
-    for v in graph.keys():
-        if not flag[v]:
-            dfs(v, newG, color, flag)
-            color += 1
-    for v in Q:
-        print(flag[v])
-    '''
-    supE, TE = EDGETRUSS(graph)
-    '''
-    print("TE")
     for v in graph.keys():
         for u in graph[v]:
-            if v < u:
-                print((u, v), TE[cedge(u, v)])
-    '''
+            newG[v].append((u, 1))
+    label = defaultdict(int)
+    color = 1
+    for v in Q:
+        if not label[v]:
+            dfs(v, newG, color, label)
+            color += 1
+    maxlabel = Counter(label.values()).most_common(1)[0][0]
+    newQ = [q for q in Q if label[q] == maxlabel]
+    return newQ
+def LCTC_MAIN(graph, szLimit, Q):
+    Q = prepareforq(Q,graph)
+    supE, TE = EDGETRUSS(graph)
     steiner = STEINER(copy.copy(TE), graph, Q)
     if steiner.G is None or len(steiner.G) == 0: return []
     G0 = FINDG0(steiner.G, graph, Q, szLimit, copy.copy(TE))
@@ -443,6 +438,9 @@ if __name__ == "__main__":
     G = CS.tempt_nodes_information
     graph = {v: G[v][0] for v in G.keys()}
     x = 0
-    group = CS.graph_information['Groups']['circle2']
-    print(LCTC_MAIN(graph, 40, ['147', '140', '99', '270', '116']))
+    group = CS.graph_information['Groups']['student']
+    Q = ['http://www.cs.cornell.edu/info/people/nikos/nikos.html', 'http://www.cs.cornell.edu/info/people/ghias/home.html', 'http://www.cs.cornell.edu/info/people/yminsky/yminsky.html', 'http://www.cs.cornell.edu/info/people/whkao/whkao.html', 'http://cam.cornell.edu/ph/index.html']
+
+
+    print(LCTC_MAIN(graph, 20,Q))
     # print(CS.graph_information)
