@@ -9,13 +9,14 @@ INF = float('inf')
 def cedge(u,v):
     return min(u,v),max(u,v)
 
+
 # flag -> a set indicates existence
-def buildNewGraph(graph,flagv):
+def buildNewGraph(graph, flagv):
     newG = {}
     flag = defaultdict(int)
     for v in flagv: flag[v] = 1
     for v in flag.keys():
-        newG[v] = [[],[]]
+        newG[v] = [[], []]
         for u in graph[v][0]:
             if flag.get(u) is None or not flag[u]: continue
             newG[v][0].append(u)
@@ -23,13 +24,19 @@ def buildNewGraph(graph,flagv):
     return newG
 
 
-def deleteEdges(graph,edgestoDelete):
+def deleteEdges(graph, edgestoDelete):
     newG = {}
+    flagedges = defaultdict(int)
+    for e in edgestoDelete:
+        flagedges[e] = 1
+    tmpset = []
     for v in graph.keys():
         newG[v]=[[],copy.deepcopy(graph[v][1])]
         for u in graph[v][0]:
-            if not cedge(u,v) in edgestoDelete:
+            if flagedges[cedge(u,v)]==0:
                 newG[v][0].append(u)
+        if len(newG[v][0]) == 0: tmpset.append(v)
+    for v in tmpset: del(newG[v])
     return newG
 
 
@@ -50,20 +57,24 @@ def SPFA(graph, Q):
     while not que.empty():
         u = que.get()
         inq[u] = 0
-        for v, w in graph[u][0]:
-            if distG[u] + w < distG[v]:
-                distG[v] = distG[u] + w
-                father[v] = u
-                s[v] = s[u]
-                que.put(v)
-                inq[v] = 1
+        try:
+            for v, w in graph[u][0]:
+                if distG[u] + w < distG[v]:
+                    distG[v] = distG[u] + w
+                    father[v] = u
+                    s[v] = s[u]
+                    que.put(v)
+                    inq[v] = 1
+        except:
+            print("yesss")
     return distG, s, father
 
 
 #dfs遍历graph 区分联通块
 def dfsWithLable(v, graph, flag, color):
     flag[v] = color
-    for u, w in graph[v]:
+    for e in graph[v][0]:
+        u = e if not type(e) == tuple else e[0]
         if not flag[u]:
             dfsWithLable(u, graph, flag, color)
 
@@ -74,6 +85,7 @@ def connected(graph, Q):
     flag = defaultdict(int)
     color = 0
     for v in Q:
+        if graph.get(v) is None: return False
         if not flag[v]:
             color += 1
             if color >= 2: break
@@ -82,6 +94,8 @@ def connected(graph, Q):
 
 
 def getDistG(graph,Q):
+    flagq = defaultdict(int)
+    for q in Q: flagq[q] = 1
     distG = {v:-INF for v in graph.keys()}
     newG = {}
     for v in graph.keys():
@@ -90,9 +104,11 @@ def getDistG(graph,Q):
             newG[v][0].append((u,1))
 
     for q in Q:
+        distG[q] = 0
         tmpdist,s,father = SPFA(newG,[q])
         for v in distG.keys():
-            distG[v] = max(distG[v],tmpdist[v])
+            if not flagq[v]:
+                distG[v] = max(distG[v],tmpdist[v])
     return distG
 
 
@@ -100,7 +116,9 @@ def getDistG(graph,Q):
 def getNeighborEdges(graph,S):
     edges = []
     for v in S:
-        for u in graph[v]:
-            if u < v:
+        try:
+            for u in graph[v][0]:
                 edges.append(cedge(u, v))
+        except:
+            print("yesss")
     return edges

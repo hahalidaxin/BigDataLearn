@@ -36,7 +36,7 @@ def StructuralTrussness(graph):
     tmpNumEdge = numEdge
     TE = defaultdict(int)
     while (numEdge):
-        while (lowestSup < tmpNumEdge and supE[vert[lowestSup]] <= k - 2):
+        while lowestSup < tmpNumEdge and supE[vert[lowestSup]] <= k - 2:
             u, v = e = vert[lowestSup]
             for w in graph[u][0]:
                 e1 = cedge(v, w)

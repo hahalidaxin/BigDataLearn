@@ -27,6 +27,19 @@ def computeGainFunc(k, graph, Wq):
     gain = {}
     fHWq = thetaFuncforG(graph,Wq)
     for v in graph.keys():
-        flagset = [u for u in graph[v][0] if len(graph[u][0]) != k - 1]
-        gain[v] = fHWq - thetaFuncforG(GraphFunc.buildNewGraph(graph, flagset), Wq)
+        flagv = {}
+        for u in graph[v][0]:
+            if len(graph[u][0]) == k-1:
+                flagv[u]=0
+            else :
+                flagv[u] = 1
+        flagv[v] = 0
+        flagset = []
+        for u in graph.keys():
+            if flagv.get(u) is None: flagset.append(u)
+            elif flagv[u] == 1: flagset.append(u)
+        try:
+            gain[v] = fHWq - thetaFuncforG(GraphFunc.buildNewGraph(graph, flagset), Wq)
+        except:
+            print("11234")
     return gain

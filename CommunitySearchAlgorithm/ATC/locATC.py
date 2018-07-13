@@ -13,7 +13,7 @@ import CommunitySearch as CS
 
 
 INF = float('inf')
-erlta = 5
+erlta = 3
 szLimit = 20
 
 
@@ -73,8 +73,22 @@ def ExtendtoGt(steinerT, origraph,Wq, TE):
 
 
 def MaintainKDTruss(k,d,graph,Q,Wq):
-    return True
-
+    Gt = copy.deepcopy(graph)
+    while True:
+        TE,supE = ATindex.StructuralTrussness(Gt)
+        distG = GraphFunc.getDistG(Gt,Q)
+        edgestodelete = {}
+        for v in supE:
+            if supE[v] < k-2:
+                for u in Gt[v][0]:
+                    edgestodelete[cedge(u,v)] = 1
+        for e in distG.keys():
+            if distG[e] > d:
+                edgestodelete[e]=1
+        if len(edgestodelete) == 0: return Gt
+        Gt = GraphFunc.deleteEdges(Gt,edgestodelete)
+        if len(Gt) == 0: break
+    return Gt
 
 def BULK(graph,Q,Wq,k,d):
     l = 0
@@ -82,20 +96,27 @@ def BULK(graph,Q,Wq,k,d):
     distG = GraphFunc.getDistG(graph,Q)
     if d is None: d=max(distG.values())
     S = [v for v in Gl.keys() if distG[v]<=d]
-    if k is None: k = max(ATindex.StructuralTrussness(Gl).values())
-    Gl = GraphFunc.buildNewGraph(Gl,S)
+    for q in Q:
+        if not q in S: return False
+    Gl = GraphFunc.buildNewGraph(Gl, S)
+    if k is None: k = max(ATindex.StructuralTrussness(Gl)[0].values())
     maxfunc, ansg = -INF, None
     while GraphFunc.connected(graph,Q):
-        gain = AttributeScoreFunc.computeGainFunc(graph,Wq)
-        mingain = min(gain.values())
-        S = [v for v in gain.keys() if gain[v] == mingain]
-        S = random.sample(S,erlta/(erlta+1))
+        attriscore = AttributeScoreFunc.attributeScore(Gl, Wq)
+        if maxfunc < attriscore: maxfunc, ansg = attriscore, copy.deepcopy(Gl)
+
+        gain = AttributeScoreFunc.computeGainFunc(k,graph,Wq)
+        mingain = INF
+        for v in gain:
+            if gain[v] < mingain and not v in Q : mingain = gain[v]
+        if mingain == INF : break
+        S = [v for v in gain.keys() if gain[v] == mingain and not v in Q]
+        S = random.sample(S,max(1,int(len(S)*erlta/(erlta+1))))
         edgesToDelete = GraphFunc.getNeighborEdges(Gl,S)
         Gl = GraphFunc.deleteEdges(Gl,edgesToDelete)
         Gl = MaintainKDTruss(k,d,Gl,Q,Wq)
-        attriscore = AttributeScoreFunc.attributeScore(Gl,Wq)
-        if maxfunc < attriscore : maxfunc, ansg = attriscore,copy.deepcopy(Gl)
-    return ansg
+
+    return list(ansg.keys())
 
 def locATC(graph,Q,Wq,k=None,d=None):
     global attrTE,attrSupE
@@ -106,9 +127,12 @@ def locATC(graph,Q,Wq,k=None,d=None):
 
 
 if __name__ == "__main__":
+    '''
     graph = CS.tempt_nodes_information
     group = CS.graph_information['Groups']['circle0']
     Q = random.sample(group[0],min(5,len(group[0])))
     Wq = random.sample(group[1],min(3,len(group[1])))
-
     print(locATC(graph, Q, Wq))
+    '''
+    G = {'222': [['0', '186', '240'], [8, 51, 54, 56, 60, 66, 78, 93, 101, 127, 139, 172, 193, 215]], '0': [['183', '222', '54'], [10, 15, 40, 51, 53, 54, 55, 56, 70, 79, 105, 128, 130, 146, 148, 152, 157, 161, 164, 167, 169, 177, 193, 196, 206, 207, 209, 211, 213, 220]], '183': [['0', '133'], [8, 53, 54, 56, 66, 78, 91, 93, 128, 129, 142, 157, 170, 175, 212, 218]], '133': [['183'], [8, 51, 54, 56, 60, 66, 78, 128, 139]], '54': [['0'], [79, 93, 101, 128, 134]], '186': [['222'], [75, 78, 128]], '240': [['222'], [51, 54, 55, 69, 70, 78, 128]]}
+    TE,supE = ATindex.StructuralTrussness(G)
