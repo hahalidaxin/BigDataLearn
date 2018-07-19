@@ -1,5 +1,6 @@
 import queue
 from collections import defaultdict
+from ATC import GraphFunc
 
 def cedge(u,v):
     return min(u,v),max(u,v)
@@ -31,9 +32,10 @@ class Steiner:
                 if distG[u] + w < distG[v]:
                     distG[v] = distG[u] + w
                     father[v] = u
-                    s[v] = s[u]
-                    que.put(v)
-                    inq[v] = 1
+                    if not v in inq or not inq[v]:
+                        s[v] = s[u]
+                        que.put(v)
+                        inq[v] = 1
         return s, distG, father
 
     def find(self, x, fa):
@@ -69,13 +71,14 @@ class Steiner:
             for u, w in graph[v]:
                 distuv[cedge(u, v)] = w
         for v in oriGraph.keys():
-            for u,w in oriGraph[v]:
-                oridistuv[cedge(u,v)]=w
+            for u, w in oriGraph[v]:
+                oridistuv[cedge(u,v)] = w
 
+        flagedge = {}
         for v in self.s.keys():
             if oriGraph.get(v) is None: continue
             for u,w in oriGraph[v]:
-                if self.s[u] < self.s[v]:
+                if self.s[u] < self.s[v] and not cedge(self.s[u],self.s[v]) in flagedge:
                     dist = distuv.get(cedge(self.s[u], self.s[v]))
                     if not dist is None and distG[v] + distG[u] + w == dist:
                         for x in [u, v]:
@@ -85,6 +88,7 @@ class Steiner:
                                 x = father[x]
                         newG[u].append((v, oridistuv[cedge(u,v)]))
                         newG[v].append((u, oridistuv[cedge(u,v)]))
+                        flagedge[cedge(self.s[u], self.s[v])] = 1
         if len(graph) == 1: newG[list(graph.keys())[0]] = []
         for v in newG.keys():
             newG[v] = {}.fromkeys(newG[v]).keys()  # 去掉重复的边
@@ -112,7 +116,6 @@ class Steiner:
         triList = []
         for u in graph.keys():
             if self.s.get(u) is None:
-                graph[u] = None  # 删除不能与Q中节点联通的节点
                 continue
             for v,w in graph[u]:
                 if self.s.get(v) is None: continue
@@ -126,11 +129,13 @@ class Steiner:
                 G1[u].append((v, w))
                 G1[v].append((u, w))
         if len(Q) == 1: G1[Q[0]] = []
+        # flagset = [v for v in G1.keys() if not self.s.get(v) is None]
         return G1
 
     def CONSTRUCT(self, graph, Q):
         G1 = self.GETG1(graph, Q)
         # G2 = self.KRUSKAL(G1)
+        if len(G1)==0: return []
         G3 = self.EXPAND(G1, graph)
         G4 = self.KRUSKAL(G3)
         G5 = self.DELETELEAF(G4, Q)
