@@ -65,7 +65,6 @@ def StructuralTrussness(graph):
         k += 1
     return dict(TE), dict(ansSupE)
 
-
 def AttributedTrussness(graph,Wq):
     attrTE = {}
     attrSupE = {}

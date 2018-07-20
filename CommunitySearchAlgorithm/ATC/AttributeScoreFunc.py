@@ -1,31 +1,31 @@
-
+from collections import defaultdict
 from ATC import GraphFunc
 
-INF = float('inf')
-
-
 def thetaFunc(H, w):
-    cnt = sum(w in H[v][1] for v in H)
+    cnt = 0
+    for v in H.keys():
+        if w in H[v][1]: cnt += 1
     return cnt / len(H)
 
 
-def thetaFuncforWqSet(H,W):
-    ans = 0
-    for w in W:
-        ans += thetaFunc(H,w)
-    return ans
+def attributeScore( H, w):
+    return thetaFunc(H, w) ** 2 * len(H)
 
 
-def attributeScore(H, W):
+def thetaFuncforG(G, Wq):
+    invertedWq = defaultdict(list)
     ans = 0
-    for w in W:
-        ans += (thetaFunc(H, w) ** 2) * len(H)
+    for v in G:
+        for w in G[v][1]:
+            invertedWq[w].append(v)
+    for w in Wq:
+        ans += len(invertedWq[w])/len(G)
     return ans
 
 
 def computeGainFunc(k, graph, Wq):
     gain = {}
-    fHWq = attributeScore(graph,Wq)
+    fHWq = thetaFuncforG(graph,Wq)
     for v in graph.keys():
         flagv = {}
         for u in graph[v][0]:
@@ -38,9 +38,8 @@ def computeGainFunc(k, graph, Wq):
         for u in graph.keys():
             if flagv.get(u) is None: flagset.append(u)
             elif flagv[u] == 1: flagset.append(u)
-        newG = GraphFunc.buildNewGraph(graph, flagset)
-        if len(newG) == 0:
-            gain[v] = INF
-        else:
-            gain[v] = fHWq - attributeScore(GraphFunc.buildNewGraph(graph, flagset), Wq)
+        try:
+            gain[v] = fHWq - thetaFuncforG(GraphFunc.buildNewGraph(graph, flagset), Wq)
+        except:
+            print("11234")
     return gain
