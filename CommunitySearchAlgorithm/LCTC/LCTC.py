@@ -102,8 +102,9 @@ class STEINER:
                     father[v] = u
                     s[v] = s[u]
                     minTruss[v] = tmpminTruss
-                    que.put(v)
-                    inq[v] = 1
+                    if not inq[v]:
+                        que.put(v)
+                        inq[v] = 1
         return s, distG, father
 
     def find(self, x, fa):
