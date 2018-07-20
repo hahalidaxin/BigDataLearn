@@ -100,10 +100,17 @@ def SPFA(graph, Q):
 #dfs遍历graph 区分联通块
 def dfsWithLable(v, graph, flag, color):
     flag[v] = color
-    for e in graph[v][0]:
-        u = e if not type(e) == tuple else e[0]
-        if not flag[u]:
-            dfsWithLable(u, graph, flag, color)
+    if len(graph[v]) == 2 and type(graph[v])!=tuple and \
+        type(graph[v][1])==list:
+        for e in graph[v][0]:
+            u = e if not type(e) == tuple else e[0]
+            if not flag[u]:
+                dfsWithLable(u, graph, flag, color)
+    else:
+        for e in graph[v]:
+            u = e if not type(e) == tuple else e[0]
+            if not flag[u]:
+                dfsWithLable(u, graph, flag, color)
 
 
 #判断Q点集在graph中是否依旧联通
@@ -121,15 +128,13 @@ def connected(graph, Q):
 
 
 def getDistG(graph,Q):
-    flagq = defaultdict(int)
-    for q in Q: flagq[q] = 1
     distG = {v:-INF for v in graph.keys()}
     for q in Q:
         distG[q] = 0
         tmpdist = bfsMinDist(graph,[q])
         for v in distG.keys():
-            if not flagq[v] and v in tmpdist:
-                    distG[v] = max(distG[v],tmpdist[v])
+            if v in tmpdist:
+                distG[v] = max(distG[v],tmpdist[v])
     return distG
 
 

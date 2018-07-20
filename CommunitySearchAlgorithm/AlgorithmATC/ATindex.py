@@ -1,9 +1,8 @@
 import copy
 from collections import defaultdict
-
 import sys
 sys.path.append(r"..\\")
-from ATC import GraphFunc
+from AlgorithmATC import GraphFunc
 
 def cedge(u, v):
     return min(u, v), max(u, v)

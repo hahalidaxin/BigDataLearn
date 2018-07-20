@@ -1,5 +1,4 @@
-
-from ATC import GraphFunc
+from AlgorithmATC import GraphFunc
 
 INF = float('inf')
 
