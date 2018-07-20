@@ -198,6 +198,7 @@ class STEINER:
         if len(Q) == 1: G1[Q[0]] = []
         return G1
 
+
     def CONSTRUCT(self, graph, Q):
         G1 = self.GETG1(graph, Q)
         # G2 = self.KRUSKAL(G1)
@@ -441,7 +442,6 @@ if __name__ == "__main__":
     x = 0
     group = CS.graph_information['Groups']['student']
     Q = ['http://www.cs.cornell.edu/info/people/nikos/nikos.html', 'http://www.cs.cornell.edu/info/people/ghias/home.html', 'http://www.cs.cornell.edu/info/people/yminsky/yminsky.html', 'http://www.cs.cornell.edu/info/people/whkao/whkao.html', 'http://cam.cornell.edu/ph/index.html']
-
 
     print(LCTC_MAIN(graph, 20,Q))
     # print(CS.graph_information)

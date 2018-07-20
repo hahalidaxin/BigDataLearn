@@ -248,12 +248,14 @@ def test_s(s,posy):
             return False
     return True
 
+
 # 主算法 Inc-S算法 递增序、空间友好的算法
 def INCS(G, Property, cltree, q, k, S):
     # x寻找一条路径，这条路径上包含有q节点，而且满足路径上节点的coreG位于[end,top]之间
 
     R = {}
     cltree.findR(cltree.root, q, k, cltree.coreG[q], R)
+    k = min(cltree.coreG[q],k)
     l = 0
     FAI = []
     for p in S:
@@ -362,7 +364,10 @@ def test_dfs(rt):
         if (not flag[v]):
             test_dfs(v)
 
+
 acc_maindef = 123
+
+
 def ACC_MAIN(graph, property, q, k, S):
     S = list(set(S)&set(property[q]))
     if len(S) == 0:

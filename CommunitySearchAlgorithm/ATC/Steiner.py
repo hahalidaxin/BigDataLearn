@@ -3,7 +3,7 @@ from collections import defaultdict
 from ATC import GraphFunc
 
 def cedge(u,v):
-    return min(u,v),max(u,v)
+    return min(u,v), max(u,v)
 
 
 class Steiner:
