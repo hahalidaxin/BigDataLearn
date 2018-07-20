@@ -24,6 +24,18 @@ def buildNewGraph(graph, flagv):
     return newG
 
 
+# G = {[(u1,w1),()...],[]}
+def buildNewGraph2(graph,flagset):
+    newG = {}
+    for v in flagset:
+        newG[v] = []
+        for u, w in graph[v]:
+            if u in flagset:
+                newG[v].append((u, w))
+    return newG
+
+
+
 def deleteEdges(graph, edgestoDelete):
     newG = {}
     flagedges = defaultdict(int)
@@ -38,6 +50,21 @@ def deleteEdges(graph, edgestoDelete):
         if len(newG[v][0]) == 0: tmpset.append(v)
     for v in tmpset: del(newG[v])
     return newG
+
+
+def bfsMinDist(graph,Q):
+    distG = {}
+    que = queue.Queue()
+    for q in Q:
+        distG[q] = 0
+        que.put(q)
+    while not que.empty():
+        u = que.get()
+        for v in graph[u][0]:
+            if not v in distG:
+                distG[v] = distG[u] + 1
+                que.put(v)
+    return distG
 
 
 #以Q中的点为点集 跑SPFA算法
@@ -66,7 +93,7 @@ def SPFA(graph, Q):
                     que.put(v)
                     inq[v] = 1
         except:
-            print("yesss")
+            print("yes")
     return distG, s, father
 
 
@@ -97,18 +124,12 @@ def getDistG(graph,Q):
     flagq = defaultdict(int)
     for q in Q: flagq[q] = 1
     distG = {v:-INF for v in graph.keys()}
-    newG = {}
-    for v in graph.keys():
-        newG[v] = [[],copy.deepcopy(graph[v][1])]
-        for u in graph[v][0]:
-            newG[v][0].append((u,1))
-
     for q in Q:
         distG[q] = 0
-        tmpdist,s,father = SPFA(newG,[q])
+        tmpdist = bfsMinDist(graph,[q])
         for v in distG.keys():
-            if not flagq[v]:
-                distG[v] = max(distG[v],tmpdist[v])
+            if not flagq[v] and v in tmpdist:
+                    distG[v] = max(distG[v],tmpdist[v])
     return distG
 
 
@@ -122,3 +143,13 @@ def getNeighborEdges(graph,S):
         except:
             print("yesss")
     return edges
+
+
+def addNodewithG(graph, origraph, u):
+    newG = copy.deepcopy(graph)
+    newG[u] = [[], copy.deepcopy(origraph[u][1])]
+    for v in origraph[u][0]:
+        if v in newG and newG[v][0].count(u) == 0:
+            newG[v][0].append(u)
+            newG[u][0].append(v)
+    return newG
