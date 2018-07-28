@@ -99,18 +99,25 @@ def SPFA(graph, Q):
 
 #dfs遍历graph 区分联通块
 def dfsWithLable(v, graph, flag, color):
+    # 内部改成bfs实现
+    que = queue.Queue()
+    que.put(v)
     flag[v] = color
-    if len(graph[v]) == 2 and type(graph[v])!=tuple and \
-        type(graph[v][1])==list:
-        for e in graph[v][0]:
-            u = e if not type(e) == tuple else e[0]
-            if not flag[u]:
-                dfsWithLable(u, graph, flag, color)
-    else:
-        for e in graph[v]:
-            u = e if not type(e) == tuple else e[0]
-            if not flag[u]:
-                dfsWithLable(u, graph, flag, color)
+    while not que.empty():
+        v = que.get()
+        if len(graph[v]) == 2 and type(graph[v]) != tuple and \
+                type(graph[v][1]) == list:
+            for e in graph[v][0]:
+                u = e if not type(e) == tuple else e[0]
+                if not flag[u]:
+                    que.put(u)
+                    flag[u] = color
+        else:
+            for e in graph[v]:
+                u = e if not type(e) == tuple else e[0]
+                if not flag[u]:
+                    que.put(u)
+                    flag[u] = color
 
 
 #判断Q点集在graph中是否依旧联通

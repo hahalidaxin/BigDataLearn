@@ -34,25 +34,25 @@ def StructuralTrussness(graph):
     k, lowestSup = 2, 0
     tmpNumEdge = numEdge
     TE = defaultdict(int)
-    while (numEdge):
+    while numEdge:
         while lowestSup < tmpNumEdge and supE[vert[lowestSup]] <= k - 2:
             u, v = e = vert[lowestSup]
             for w in graph[u][0]:
                 e1 = cedge(v, w)
                 e2 = cedge(u, w)
-                if (edgeExist[e1] and edgeExist[e2]):
+                if edgeExist[e1] and edgeExist[e2]:
                     # 维护vert 改变两条边在vert中的位置
                     for ex in [e1, e2]:
                         pw = max(bin[supE[ex]], lowestSup + 1)
                         pu = pos[ex]
                         fe = vert[pw]
-                        if (fe != ex):
+                        if fe != ex:
                             pos[ex] = pw
                             pos[fe] = pu
                             vert[pw] = ex
                             vert[pu] = fe
                         bin[supE[ex]] += 1
-                        if (bin.get(supE[ex] - 1) is None):
+                        if bin.get(supE[ex] - 1) is None:
                             bin[supE[ex] - 1] = pos[ex]
                         supE[ex] -= 1
 

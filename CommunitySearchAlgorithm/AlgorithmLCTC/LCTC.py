@@ -20,7 +20,7 @@ class STEINER:
         self.G = self.CONSTRUCT(graph, Q)
 
     def cedge(self, u, v):
-        return (min(u, v), max(u, v))
+        return min(u, v), max(u, v)
 
     def SPFA(self, graph, Q):
         distG, inq, s = {}, {}, {}
@@ -169,7 +169,7 @@ class LCTCSearch:
         return
 
     def cedge(self, u, v):
-        return (min(u, v), max(u, v))
+        return min(u, v), max(u, v)
 
     def EDGETRUSS(self, graph):
         # 利用Improved Truss Decomposition算法 计算grapn中每条边的trussness
@@ -191,37 +191,37 @@ class LCTCSearch:
         last, numEdge = -1, vert.__len__()
         for i in range(numEdge):
             pos[vert[i]] = i
-            if (supE[vert[i]] != last):
+            if supE[vert[i]] != last:
                 bin[supE[vert[i]]] = i
                 last = supE[vert[i]]
         k, lowestSup = 2, 0
         tmpNumEdge = numEdge
         TE = defaultdict(int)
-        while (numEdge):
-            while (lowestSup < tmpNumEdge and supE[vert[lowestSup]] <= k - 2):
+        while numEdge:
+            while lowestSup < tmpNumEdge and supE[vert[lowestSup]] <= k - 2:
                 u, v = e = vert[lowestSup]
                 for w in graph[u]:
                     e1 = self.cedge(v, w)
                     e2 = self.cedge(u, w)
-                    if (edgeExist[e1] and edgeExist[e2]):
+                    if edgeExist[e1] and edgeExist[e2]:
                         # 维护vert 改变两条边在vert中的位置
                         for ex in [e1, e2]:
                             pw = max(bin[supE[ex]], lowestSup + 1)
                             pu = pos[ex]
                             fe = vert[pw]
-                            if (fe != ex):
+                            if fe != ex:
                                 pos[ex] = pw
                                 pos[fe] = pu
                                 vert[pw] = ex
                                 vert[pu] = fe
                             bin[supE[ex]] += 1
-                            if (bin.get(supE[ex] - 1) is None):
+                            if bin.get(supE[ex] - 1) is None:
                                 bin[supE[ex] - 1] = pos[ex]
                             supE[ex] -= 1
                 TE[e] = k
                 edgeExist[e] = 0
                 numEdge -= 1
-                if (numEdge == 0): break
+                if numEdge == 0: break
                 lowestSup += 1
             k += 1
         return ansSupE, TE
@@ -318,10 +318,15 @@ class LCTCSearch:
         return G0
 
     def dfs(self, v, graph, color, flag):
+        que = queue.Queue()
+        que.put(v)
         flag[v] = color
-        for u, w in graph[v]:
-            if not flag[u]:
-                self.dfs(u, graph, color, flag)
+        while not que.empty():
+            v = que.get()
+            for u, w in graph[v]:
+                if not flag[u]:
+                    flag[u] = color
+                    que.put(u)
 
     def connected(self, graph, Q):
         if len(graph) == 0: return False
@@ -420,7 +425,7 @@ class LCTCSearch:
 
     def LCTC_MAIN(self, graph, szLimit, Q):
         nowQ = self.prepareforq(Q,graph)
-        supE, TE = self.EDGETRUSS(graph)
+        supE, TE = self.supE, self.TE
         steiner = STEINER(copy.copy(TE), graph, nowQ)
         if steiner.G is None or len(steiner.G) == 0: return []
         G0 = self.FINDG0(steiner.G, graph, nowQ, szLimit, copy.copy(TE))
@@ -450,14 +455,17 @@ class LCTCSearch:
                 'allrecall':0,
                 'allmemberlen':0
             }
+        graph = {v: self.tempt_nodes_information[v][0] for v in self.tempt_nodes_information}
+        self.supE, self.TE = self.EDGETRUSS(graph)
+        print('supE/TE built')
         for i in range(0,len(self.ExperimentalDataList)):
+            print("rk {} of {}".format(i, len(self.ExperimentalDataList)))
             TestData = self.ExperimentalDataList[i]
             group_name = TestData[0]
             QVlist = TestData[1]
             QAlist = TestData[2]
             GMembers = self.graph_information['Groups'][group_name][0]
-            graph = {v: self.tempt_nodes_information[v][0] for v in self.tempt_nodes_information}
-            SearchedMembers = self.LCTC_MAIN(graph,50,QVlist)
+            SearchedMembers = self.LCTC_MAIN(graph,1000,QVlist)
             [precision,recall,score] = self.F1Score(GMembers,SearchedMembers)
             results['allscore'] = results['allscore'] + score
             results['allprecision'] = results['allprecision'] + precision

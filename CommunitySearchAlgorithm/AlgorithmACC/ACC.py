@@ -1,6 +1,7 @@
 import os
 import sys
 import copy
+import queue
 from collections import defaultdict
 import random
 import time
@@ -20,7 +21,7 @@ class AFU:
         self.NS[x] = self.node(-1, x)
 
     def find(self, x):
-        if (x.parent == -1):
+        if x.parent == -1:
             return x
         else:
             return self.find(x.parent)
@@ -31,10 +32,10 @@ class AFU:
     def UNION(self, x, y):
         xRoot = self.FIND(x)
         yRoot = self.FIND(y)
-        if (xRoot == yRoot): return
-        if (xRoot.rank < yRoot.rank):
+        if xRoot == yRoot: return
+        if xRoot.rank < yRoot.rank:
             xRoot.parent = yRoot
-        elif (xRoot.rank > yRoot.rank):
+        elif xRoot.rank > yRoot.rank:
             yRoot.parent = xRoot
         else:
             yRoot.parent = xRoot
@@ -64,10 +65,15 @@ class CL_TREE:
     # 构建CL-Tree
     @classmethod
     def dfs(cls, v, label, graph, rank):
+        que = queue.Queue()
+        que.put(v)
         label[v] = rank
-        for u in graph[v]:
-            if not (label[u]):
-                CL_TREE.dfs(u, label, graph, rank)
+        while not que.empty():
+            v = que.get()
+            for u in graph[v]:
+                if not label[u]:
+                    label[u] = rank
+                    que.put(u)
 
     def ConnectedComponents(self, newG):
         label = defaultdict(int)
@@ -136,7 +142,8 @@ class CL_TREE:
             V[coreG[v]].add(v)
             kmax = max(kmax, coreG[v])
         k, map, flag = kmax, {}, defaultdict(int)
-        while (k >= 0):
+        nowtime = time.time()
+        while k >= 0:
             tV = set()
             for v in V[k]:
                 tV.add(afu.FIND(v))
@@ -145,15 +152,15 @@ class CL_TREE:
             label = self.ConnectedComponents(newG)
             compo = defaultdict(set)
             for v in label.keys():
-                if (v in V[k]): compo[label[v]].add(v)
+                if v in V[k]: compo[label[v]].add(v)
             for i in compo.keys():
                 Pi = self.treenode(k, compo[i], property)
                 for v in compo[i]:
                     map[v] = Pi
                     for u in graph[v]:
-                        if (coreG[u] >= coreG[v]):
+                        if coreG[u] >= coreG[v]:
                             afu.UNION(u, v)
-                        if (coreG[u] > coreG[v]):
+                        if coreG[u] > coreG[v]:
                             uRoot = afu.FIND(u)
                             uAnchor = uRoot.anchor
                             pt = map.get(uAnchor)
@@ -161,7 +168,7 @@ class CL_TREE:
                                 Pi.childList.append(pt)
                         # 基于Vk的每个连通子集进行操作
                     vRoot = afu.FIND(v)
-                    if (coreG[vRoot.anchor] > coreG[v]):
+                    if coreG[vRoot.anchor] > coreG[v]:
                         afu.UPDATEANCHOR(vRoot, coreG, v)
             k -= 1
         sons = set(graph.keys())
@@ -377,8 +384,7 @@ class ACCSearch:
         if len(S) == 0:
             S = set(random.sample(property[q],min(5,len(property[q]))))
         # print(property['193'])
-        cltree = CL_TREE(graph, property)
-        ans = self.INCS(graph, property, cltree, q, k, S)
+        ans = self.INCS(graph, property, self.cltree, q, k, S)
         if not q in ans: ans.append(q)
         return ans
 
@@ -403,12 +409,15 @@ class ACCSearch:
                 'allrecall':0,
                 'allmemberlen':0
             }
-        for i in range(0,len(self.ExperimentalDataList)):
+        self.cltree = CL_TREE(graph, property)
+        for i in range(0, len(self.ExperimentalDataList)):
+            print("rk {} of {}".format(i,len(self.ExperimentalDataList)))
             TestData = self.ExperimentalDataList[i]
             group_name = TestData[0]
             QVlist = TestData[1]
             QAlist = TestData[2]
             GMembers = self.graph_information['Groups'][group_name][0]
+            attriNum = sum(len(property[v]) for v in property)
             SearchedMembers = self.ACC_MAIN(graph, property, QVlist[0], 3, QAlist)
             [precision,recall,score] = self.F1Score(GMembers,SearchedMembers)
             results['allscore'] = results['allscore'] + score

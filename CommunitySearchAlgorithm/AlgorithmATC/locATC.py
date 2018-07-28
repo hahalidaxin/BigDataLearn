@@ -12,7 +12,6 @@ from AlgorithmATC.Steiner import Steiner
 from AlgorithmATC import AttributeScoreFunc
 import time
 
-
 class locATCSearch:
     def __init__(self,graph_information,tempt_nodes_information,ExperimentalDataList):
         self.graph_information = graph_information
@@ -208,6 +207,7 @@ class locATCSearch:
                 'allmemberlen':0
             }
         for i in range(0,len(self.ExperimentalDataList)):
+            print("rk: {}".format(i))
             TestData = self.ExperimentalDataList[i]
             group_name = TestData[0]
             QVlist = TestData[1]

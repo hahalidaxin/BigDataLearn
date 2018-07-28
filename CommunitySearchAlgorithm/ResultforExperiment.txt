@@ -1,0 +1,21 @@
+--------------------------------DATA-EgoAll || RANK-0 -------------------------------
+data:    ['.\\ExperimentDatasets\\Ego\\ego-Facebook\\facebook\\', '[0,107,1684,1912,3437,348,3980,414,686,698]', 'EgoAll']
+Finall results of Our is as follows ...... 
+ 	 F1score : 0.34662181596823843, Precision : 0.30605704192451266, Recall : 0.7062698230878335
+ 	 Time : 13.503799438476562
+ 	 TimeEvaluation : 0.0031331321202961865
+Finall results of ACC is as follows ...... 
+ 	 F1score : 0.16861255707113676, Precision : 0.22489956121383628, Recall : 0.5725383237072383
+ 	 Time : 1139.8914730548859
+ 	 TimeEvaluation : 0.26447597982711973
+Finall results of LCTC is as follows ...... 
+ 	 F1score : 0.26413193595655693, Precision : 0.23668729262936133, Recall : 0.8410192901643588
+ 	 Time : 505.58369064331055
+ 	 TimeEvaluation : 0.11730480061329711
+Finall results of ATC is as follows ...... 
+ 	 F1score : 0.4096690558427644, Precision : 0.42245786682522096, Recall : 0.5890015345156923
+ 	 Time : 4263.746538639069
+ 	 TimeEvaluation : 0.9892683384313385
+
+
+
