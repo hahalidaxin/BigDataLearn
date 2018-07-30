@@ -426,9 +426,9 @@ class LCTCSearch:
     def LCTC_MAIN(self, graph, szLimit, Q):
         nowQ = self.prepareforq(Q,graph)
         supE, TE = self.supE, self.TE
-        steiner = STEINER(copy.copy(TE), graph, nowQ)
+        steiner = STEINER(copy.copy(TE), copy.deepcopy(graph), nowQ)
         if steiner.G is None or len(steiner.G) == 0: return []
-        G0 = self.FINDG0(steiner.G, graph, nowQ, szLimit, copy.copy(TE))
+        G0 = self.FINDG0(steiner.G, copy.deepcopy(graph), nowQ, szLimit, copy.copy(TE))
         ansG = self.BUILKDELETE(G0, nowQ, supE, copy.copy(TE))
         ansg = list(ansG.keys())
         for q in Q:

@@ -7,7 +7,7 @@ from AlgorithmATC.locATC import locATCSearch
 from AlgorithmLCTC.LCTC import LCTCSearch
 
 data_list = {
-    'Ego': [[".\\ExperimentDatasets\\Ego\\ego-Facebook`1\\facebook\\", "0", 'Ego'],
+    'Ego': [[".\\ExperimentDatasets\\Ego\\ego-Facebook\\facebook\\", "0", 'Ego'],
             [".\\ExperimentDatasets\\Ego\\ego-Facebook\\facebook\\", "107", 'Ego'],
             [".\\ExperimentDatasets\\Ego\\ego-Facebook\\facebook\\", "1684", 'Ego'],
             [".\\ExperimentDatasets\\Ego\\ego-Facebook\\facebook\\", "1912", 'Ego'],
@@ -40,9 +40,9 @@ data_list = {
     'Special': [[".\\ExperimentDatasets\\Attribute\\TerroristRel\\",["TerroristRel", ["contact", "family", "colleague", "congregate"]], 'Special']]
 }
 with open("ResultforExperiment.txt",'a') as f:
-    dataname = 'Attribute'
+    dataname = 'Ego'
     datanum = len(data_list[dataname])
-    for datarank in range(datanum):
+    for datarank in range(1):
         data = data_list[dataname][datarank]
         file_dir = data[0]
         data_name = data[1]
@@ -74,7 +74,7 @@ with open("ResultforExperiment.txt",'a') as f:
         # print(ExperimentalDataList)
         ##############################四个算法性能对比################################
         # 社区查找评估
-
+        '''
         obj2 = OurSearch(graph_information, tempt_nodes_information, ExperimentalDataList)
         result = obj2.main(pa, pb, pc, pd)
         resultS = result[0]
@@ -91,7 +91,6 @@ with open("ResultforExperiment.txt",'a') as f:
         f.writelines(" \t TimeEvaluation : " + str(TimeEvaluation))
         f.write('\n')
         print("Our is done")
-
         print("Finall results of Our is as follows ...... ")
         print(" \t F1score : " + str(resultS) + ", Precision : " + str(resultP) + ", Recall : " + str(resultR))
         print(" \t Time : " + str(duration))
@@ -101,6 +100,7 @@ with open("ResultforExperiment.txt",'a') as f:
         # f.writelines(tempt_nodes_information)
         # f.writelines(ExperimentalDataList)
         # 社区查找评估
+        '''
         obj2 = ACCSearch(graph_information, tempt_nodes_information, ExperimentalDataList)
         result = obj2.main()
         resultS = result[0]
@@ -108,6 +108,7 @@ with open("ResultforExperiment.txt",'a') as f:
         resultR = result[2]
         duration = result[3]
         TimeEvaluation = result[4]
+        '''
         f.writelines("Finall results of ACC is as follows ...... ")
         f.write('\n')
         f.writelines(" \t F1score : " + str(resultS) + ", Precision : " + str(resultP) + ", Recall : " + str(resultR))
@@ -117,13 +118,13 @@ with open("ResultforExperiment.txt",'a') as f:
         f.writelines(" \t TimeEvaluation : " + str(TimeEvaluation))
         f.write('\n')
         print("ACC is done")
-    
+        '''
         print("Finall results of ACC is as follows ...... ")
         print(" \t F1score : " + str(resultS) + ", Precision : " + str(resultP) + ", Recall : " + str(resultR))
         print(" \t Time : " + str(duration))
         print(" \t TimeEvaluation : " + str(TimeEvaluation))
         print("ACC is done")
-        
+        '''
         # 社区查找评估
         obj2 = LCTCSearch(graph_information, tempt_nodes_information, ExperimentalDataList)
         result = obj2.main()
@@ -172,5 +173,5 @@ with open("ResultforExperiment.txt",'a') as f:
         print(" \t Time : " + str(duration))
         print(" \t TimeEvaluation : " + str(TimeEvaluation))
         print("ATC is done")
-
+        '''
         ##############################四个算法性能对比#################################
