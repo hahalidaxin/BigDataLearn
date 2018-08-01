@@ -99,8 +99,9 @@ with open("ResultforExperiment.txt",'a') as f:
         # f.writelines(graph_information)
         # f.writelines(tempt_nodes_information)
         # f.writelines(ExperimentalDataList)
+        
         # 社区查找评估
-        '''
+        
         obj2 = ACCSearch(graph_information, tempt_nodes_information, ExperimentalDataList)
         result = obj2.main()
         resultS = result[0]
@@ -108,7 +109,7 @@ with open("ResultforExperiment.txt",'a') as f:
         resultR = result[2]
         duration = result[3]
         TimeEvaluation = result[4]
-        '''
+    
         f.writelines("Finall results of ACC is as follows ...... ")
         f.write('\n')
         f.writelines(" \t F1score : " + str(resultS) + ", Precision : " + str(resultP) + ", Recall : " + str(resultR))
@@ -118,7 +119,7 @@ with open("ResultforExperiment.txt",'a') as f:
         f.writelines(" \t TimeEvaluation : " + str(TimeEvaluation))
         f.write('\n')
         print("ACC is done")
-        '''
+
         print("Finall results of ACC is as follows ...... ")
         print(" \t F1score : " + str(resultS) + ", Precision : " + str(resultP) + ", Recall : " + str(resultR))
         print(" \t Time : " + str(duration))
@@ -133,6 +134,7 @@ with open("ResultforExperiment.txt",'a') as f:
         resultR = result[2]
         duration = result[3]
         TimeEvaluation = result[4]
+        '''
         f.writelines("Finall results of LCTC is as follows ...... ")
         f.write('\n')
         f.writelines(" \t F1score : " + str(resultS) + ", Precision : " + str(resultP) + ", Recall : " + str(resultR))
@@ -142,14 +144,14 @@ with open("ResultforExperiment.txt",'a') as f:
         f.writelines(" \t TimeEvaluation : " + str(TimeEvaluation))
         f.write('\n')
         print("LCTC is done")
-
+        '''
         print("Finall results of LCTC is as follows ...... ")
         print(" \t F1score : " + str(resultS) + ", Precision : " + str(resultP) + ", Recall : " + str(resultR))
         print(" \t Time : " + str(duration))
         print(" \t TimeEvaluation : " + str(TimeEvaluation))
         print("LCTC is done")
 
-
+        '''
         # 社区查找评估
         obj2 = locATCSearch(graph_information, tempt_nodes_information, ExperimentalDataList)
         result = obj2.main()
