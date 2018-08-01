@@ -40,7 +40,7 @@ data_list = {
     'Special': [[".\\ExperimentDatasets\\Attribute\\TerroristRel\\",["TerroristRel", ["contact", "family", "colleague", "congregate"]], 'Special']]
 }
 with open("ResultforExperiment.txt",'a') as f:
-    dataname = 'Ego'
+    dataname = 'SNAP'
     datanum = len(data_list[dataname])
     for datarank in range(1):
         data = data_list[dataname][datarank]
