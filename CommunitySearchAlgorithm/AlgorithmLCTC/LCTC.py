@@ -7,7 +7,7 @@ import time
 from . import SortAlgorithm
 # import CommunitySearch as CS
 
-INF = 9999999
+INF = float('inf')
 
 
 class STEINER:
@@ -59,7 +59,7 @@ class STEINER:
     def GETG1(self, graph, Q):
         nowtime = time.time()
         self.s, self.distG, self.father, self.distTruss = self.SPFA(graph, Q)
-        print("spfa time",time.time()-nowtime)
+        print(" \t\t spfa time",time.time()-nowtime)
         nowtime = time.time()
         triList = []
         for u in graph:
@@ -71,7 +71,7 @@ class STEINER:
                     triList.append((self.s[u], self.s[v], self.distTruss[u] + self.distTruss[v] + deltadist, (u, v)))
         G1 = defaultdict(list)
         triList.sort()
-        print('sortime',time.time()-nowtime)
+        print(' \t\t sortime',time.time()-nowtime)
         mediumTurple = {}
         for i in range(len(triList)):
             su, sv, w, (u, v) = triList[i]
@@ -179,35 +179,31 @@ class LCTCSearch:
 
     def EDGETRUSS(self, graph):
         # 利用Improved Truss Decomposition算法 计算grapn中每条边的trussness
-        supE = defaultdict(int)
-        edgeExist = defaultdict(int)
+        supE = {}
+        edgeExist = {}
         nowtime = time.time()
         deg = {}
         for u in graph:
             deg[u] = len(graph[u])
             for v in graph[u]:
                 e = self.cedge(u,v)
-                if not edgeExist[e]:
+                if edgeExist.get(e) is None:
                     edgeExist[e] = 1
-                    supE[e] = len(set(graph[u])&set(graph[v]))
-        '''
-        for u in graph:
-            deg[u] = len(graph[u])
-            for v in graph[u]:
-                e = self.cedge(u, v)
-                edgeExist[e] = 1
-        edgelist = list(edgeExist.keys())
-        for e in edgelist:
-            u,v = e
-            x = u if deg[u]<deg[v] else v
-            for w in graph[x]:
-                if edgeExist[self.cedge(u,w)] and edgeExist[self.cedge(v,w)]:
-                    supE[e] += 1
-        '''
+                    # supE[e] = len(set(graph[u])&set(graph[v]))
+        cedge = self.cedge
+        for u, v in edgeExist:
+            if supE.get((u, v)) is None: supE[(u, v)] = 0
+            if len(graph[u][0]) > len(graph[u][0]):
+                u, v = v, u
+            for w in graph[u][0]:
+                if edgeExist.get(cedge(u, w)) is not None and edgeExist.get(cedge(v, w)) is not None:
+                    supE[cedge(u, v)] = supE.get(cedge(u, v), 0) + 1
+                    supE[cedge(u, w)] = supE.get(cedge(u, w), 0) + 1
+                    supE[cedge(u, w)] = supE.get(cedge(u, w), 0) + 1
         ansSupE = copy.copy(supE)
         # 构造vert 按照sup顺序存储所有的边 其中bin与pos是辅助数组 使得update操作能够在常数时间内完成
         vert = SortAlgorithm.bulksort(list(supE.keys()),func = lambda x: supE[x])
-        print("intersection time", time.time() - nowtime)
+        print(" \t\t intersection time", time.time() - nowtime)
         nowtime = time.time()
         bin, pos = {}, {}
         last, numEdge = -1, len(vert)
@@ -218,7 +214,7 @@ class LCTCSearch:
                 last = supE[vert[i]]
         k, lowestSup = 2, 0
         tmpNumEdge = numEdge
-        TE = defaultdict(int)
+        TE = {}
         while numEdge:
             while lowestSup < tmpNumEdge and supE[vert[lowestSup]] <= k - 2:
                 u, v = e = vert[lowestSup]
@@ -226,7 +222,7 @@ class LCTCSearch:
                 for w in graph[x]:
                     e1 = self.cedge(v, w)
                     e2 = self.cedge(u, w)
-                    if edgeExist[e1] and edgeExist[e2]:
+                    if (edgeExist.get(e1) is not None and edgeExist[e1]==1) and (edgeExist.get(e2) is not None and edgeExist[e2]==1):
                         # 维护vert 改变两条边在vert中的位置
                         for ex in [e1, e2]:
                             pw = max(bin[supE[ex]], lowestSup + 1)
@@ -247,7 +243,7 @@ class LCTCSearch:
                 if numEdge == 0: break
                 lowestSup += 1
             k += 1
-        print("else time", time.time() - nowtime)
+        print(" \t\t else time", time.time() - nowtime)
         return ansSupE, TE
 
     def BFSEXTENDG(self, graph, oriGraph, szLimit, TE):
@@ -289,7 +285,7 @@ class LCTCSearch:
         nowtime = time.time()
         self.BFSEXTENDG(graph, oriGraph, szLimit, TE)
         newG = {v: [e[0] for e in graph[v]] for v in graph}
-        print('sort time', time.time() - nowtime)
+        print(' \t\t sort time', time.time() - nowtime)
         # 对于排序 如果时间太长可以考虑使用桶排序
         for v in graph:
             graph[v].sort(key=lambda x: -TE[self.cedge(x[0], v)])
@@ -447,20 +443,20 @@ class LCTCSearch:
         # self.supE,self.TE = self.EDGETRUSS(graph)
         nowtime = time.time()
         nowQ = self.prepareforq(Q, graph)
-        print("prepare for q", time.time() - nowtime)
+        print(" \t\t prepare for q", time.time() - nowtime)
         nowtime = time.time()
         supE, TE = self.supE, self.TE
         steiner = STEINER(TE, graph, nowQ)
-        print("steiner time", time.time() - nowtime)
+        print(" \t\t steiner time", time.time() - nowtime)
         nowtime = time.time()
         # print("len of steiner",len(steiner.G))
         if steiner.G is None or len(steiner.G) == 0: return list(Q)
         G0 = self.FINDG0(steiner.G, graph, nowQ, szLimit, TE)
-        print("findG0 time", time.time() - nowtime)
+        print(" \t\t findG0 time", time.time() - nowtime)
         nowtime = time.time()
         # print("len of G0",len(G0))
         ansG = self.BUILKDELETE(G0, nowQ, self.TE, self.supE)
-        print("BULK time", time.time() - nowtime)
+        print(" \t\t BULK time", time.time() - nowtime)
         # print("len of ansg",len(ansG))
         ansg = list(set(list(ansG.keys())) | set(Q))
         return ansg
@@ -486,9 +482,9 @@ class LCTCSearch:
         }
         graph = {v: self.tempt_nodes_information[v][0] for v in self.tempt_nodes_information}
         self.supE, self.TE = self.EDGETRUSS(graph)
-        print('supE/TE built')
+        print(' \t\t supE/TE built')
         for i in range(0, len(self.ExperimentalDataList)):
-            print("rk {} of {}".format(i, len(self.ExperimentalDataList)))
+            print(" \t\t rk {} of {}".format(i, len(self.ExperimentalDataList)))
             TestData = self.ExperimentalDataList[i]
             group_name = TestData[0]
             QVlist = TestData[1]

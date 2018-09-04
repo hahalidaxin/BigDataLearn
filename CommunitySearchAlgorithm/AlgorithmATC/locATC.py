@@ -22,6 +22,7 @@ class locATCSearch:
         self.attrTE = None
         self.attrSupE = None
         self.szlimits = 60
+        self.attrTE_forall,self.attrSupE_forall = {},{}
         return
 
     def cedge(self,u,v):
@@ -29,7 +30,7 @@ class locATCSearch:
 
     def getGraphWithAttrDist(self,graph,Wq,attrTE):
         delta = 3
-        maxTe = max(attrTE[''].values())
+        maxTe = max(self.attrTE_forall.values())
         newG = defaultdict(list)
         for v in graph.keys():
             for u in graph[v][0]:
@@ -176,11 +177,10 @@ class locATCSearch:
         else :
             self.szlimits = 50
         nowQ = self.prepareforATC(graph,Q,Wq)
-        global attrTE, attrSupE
-        attrTE,attrSupE= ATindex.AttributedTrussness(graph,Wq)
+        attrTE,attrSupE,self.attrTE_forall,self.attrSupE_forall= ATindex.AttributedTrussness(graph,Wq,self.attrTE_forall,self.attrSupE_forall)
         steiner = Steiner(self.getGraphWithAttrDist(graph, Wq, attrTE),nowQ)  # steiner G 's :{v->[u1,u2...]}
         if steiner.G is None or len(steiner.G) == 0: return Q
-        Gt = self.ExtendtoGt(steiner.G, graph, Wq, attrTE[''])
+        Gt = self.ExtendtoGt(steiner.G, graph, Wq, self.attrTE_forall)
         ansg = self.BULK(Gt, nowQ, Wq, k, d)
         for q in Q:
             if not q in ansg :
@@ -207,7 +207,7 @@ class locATCSearch:
                 'allmemberlen':0
             }
         for i in range(0,len(self.ExperimentalDataList)):
-            print("rk: {}".format(i))
+            print(" \t\t rk: {}".format(i))
             TestData = self.ExperimentalDataList[i]
             group_name = TestData[0]
             QVlist = TestData[1]
