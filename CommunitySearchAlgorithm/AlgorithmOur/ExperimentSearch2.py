@@ -3,7 +3,7 @@ import time
 
 ### STEP2 社区查找 ###
 ### STEP3 结果评估 ###
-class OurSearch:
+class OurSearch2:
 	def __init__(self,graph_information,tempt_nodes_information,ExperimentalDataList):
 		self.graph_information = graph_information
 		self.tempt_nodes_information = tempt_nodes_information
@@ -16,7 +16,8 @@ class OurSearch:
 				'AdjacencyLists':{},
 				'Inner':0,
 				'InnerSquar':0,
-				'Degree':0,
+				'DegreeList':{},
+				'tADOF':0,
 				'Node':0,
 				'RelatedAttribute':0,
 				'InnerList':{},
@@ -37,7 +38,8 @@ class OurSearch:
 						SearchedInformation['AdjacencyLists'][i] = []
 			SearchedInformation['Inner'] = SearchedInformation['Inner'] + InnerN
 			SearchedInformation['InnerSquar'] = SearchedInformation['InnerSquar'] + InnerN**2
-			SearchedInformation['Degree'] = SearchedInformation['Degree'] + len(Adjacency)
+			SearchedInformation['DegreeList'][node] = len(Adjacency)
+			SearchedInformation['tADOF'] = SearchedInformation['tADOF'] + (len(Adjacency)-InnerN)*1.0/len(Adjacency)
 			SearchedInformation['InnerList'][node] = InnerN
 			for i in Attribute:
 				if i in QAlist:
@@ -88,11 +90,14 @@ class OurSearch:
 			del SearchedInformation['AdjacencyLists'][BestAdjacency['node']]
 			SearchedInformation['Inner'] = SearchedInformation['Inner'] + 2.0*BestAdjacency['tempt'][1]
 			SearchedInformation['InnerSquar'] = SearchedInformation['InnerSquar'] + BestAdjacency['tempt'][2]
-			SearchedInformation['Degree'] = SearchedInformation['Degree'] + BestAdjacency['tempt'][3]
+			SearchedInformation['DegreeList'][BestAdjacency['node']] = BestAdjacency['tempt'][3]
 			SearchedInformation['Node'] = SearchedInformation['Node'] + BestAdjacency['tempt'][4]
 			SearchedInformation['RelatedAttribute'] = SearchedInformation['RelatedAttribute'] + BestAdjacency['tempt'][5]
 			SearchedInformation['EvaluationSocre'] = BestAdjacency['EvaluationSocre']
 			SearchedInformation['InnerList'][BestAdjacency['node']] = BestAdjacency['tempt'][1]
+			SearchedInformation['tADOF'] = SearchedInformation['tADOF'] + (1-BestAdjacency['tempt'][1]*1.0/BestAdjacency['tempt'][3])
+			for node in BestAdjacency['tempt'][7]:
+				SearchedInformation['tADOF'] = SearchedInformation['tADOF'] - 1.0/SearchedInformation['DegreeList'][node]
 			for i in BestAdjacency['tempt'][7]:
 				SearchedInformation['InnerList'][i] = SearchedInformation['InnerList'][i] + 1
 			for i in BestAdjacency['tempt'][0]:
@@ -144,7 +149,7 @@ class OurSearch:
 		if SearchedMembers['Node'] == 1:
 			Quality = 0
 		else:
-			Quality = (SearchedMembers['Inner']+SearchedMembers['InnerSquar']*1.0/(SearchedMembers['Node']-1))*SearchedMembers['Inner']/(SearchedMembers['Degree']*SearchedMembers['Node'])*(SearchedMembers['Inner']/SearchedMembers['Degree'])**self.pa
+			Quality = (SearchedMembers['Inner']+SearchedMembers['InnerSquar']*1.0/(SearchedMembers['Node']-1))/SearchedMembers['Node']*(1-SearchedMembers['tADOF']*1.0/SearchedMembers['Node'])
 		Relation = SearchedMembers['RelatedAttribute']*1.0/SearchedMembers['Node']
 		SearchedMembers['EvaluationSocre'] = Quality*(Relation+0.00001)**self.pb
 		EvaluationSocre = SearchedMembers['EvaluationSocre']
@@ -154,11 +159,13 @@ class OurSearch:
 	def Evaluation_Add(self,SearchedMembers,tempt):
 		Inner = SearchedMembers['Inner'] + 2.0*tempt[1]
 		InnerSquar = SearchedMembers['InnerSquar'] + tempt[2]
-		Degree = SearchedMembers['Degree'] + tempt[3]
 		Node = SearchedMembers['Node'] + tempt[4]
+		tADOF = SearchedMembers['tADOF'] + (1-tempt[1]*1.0/tempt[3])
 		RelatedAttribute = SearchedMembers['RelatedAttribute'] + tempt[5]
+		for node in tempt[7]:
+			tADOF = tADOF - 1.0/SearchedMembers['DegreeList'][node]
 		#
-		Quality = (Inner+InnerSquar*1.0/(Node-1))*Inner/(Degree*Node)*(Inner/Degree)**self.pa
+		Quality = (Inner+InnerSquar*1.0/(Node-1))/Node*(1-tADOF*1.0/Node)
 		Relation = RelatedAttribute*1.0/Node
 		EvaluationSocre = Quality*(Relation+0.00001)**self.pb
 		return EvaluationSocre

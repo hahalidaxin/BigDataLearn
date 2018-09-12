@@ -7,7 +7,7 @@ import time
 from . import SortAlgorithm
 # import CommunitySearch as CS
 
-INF = 9999999
+INF = float('inf')
 
 
 class STEINER:
@@ -167,7 +167,7 @@ class STEINER:
             return G5
 
 
-class LCTCSearch:
+class LCTC2Search:
     def __init__(self, graph_information, tempt_nodes_information, ExperimentalDataList):
         self.graph_information = graph_information
         self.tempt_nodes_information = tempt_nodes_information
@@ -179,31 +179,17 @@ class LCTCSearch:
 
     def EDGETRUSS(self, graph):
         # 利用Improved Truss Decomposition算法 计算grapn中每条边的trussness
-        supE = defaultdict(int)
-        edgeExist = defaultdict(int)
+        supE = {}
+        edgeExist = {}
         nowtime = time.time()
         deg = {}
         for u in graph:
             deg[u] = len(graph[u])
             for v in graph[u]:
                 e = self.cedge(u,v)
-                if not edgeExist[e]:
-                    edgeExist[e] = 1
-                    supE[e] = len(set(graph[u])&set(graph[v]))
-        '''
-        for u in graph:
-            deg[u] = len(graph[u])
-            for v in graph[u]:
-                e = self.cedge(u, v)
                 edgeExist[e] = 1
-        edgelist = list(edgeExist.keys())
-        for e in edgelist:
-            u,v = e
-            x = u if deg[u]<deg[v] else v
-            for w in graph[x]:
-                if edgeExist[self.cedge(u,w)] and edgeExist[self.cedge(v,w)]:
-                    supE[e] += 1
-        '''
+                supE[e] = len(set(graph[u])&set(graph[v]))
+        print("ok1")
         ansSupE = copy.copy(supE)
         # 构造vert 按照sup顺序存储所有的边 其中bin与pos是辅助数组 使得update操作能够在常数时间内完成
         vert = SortAlgorithm.bulksort(list(supE.keys()),func = lambda x: supE[x])
@@ -218,7 +204,8 @@ class LCTCSearch:
                 last = supE[vert[i]]
         k, lowestSup = 2, 0
         tmpNumEdge = numEdge
-        TE = defaultdict(int)
+        TE = {}
+        print("ok2")
         while numEdge:
             while lowestSup < tmpNumEdge and supE[vert[lowestSup]] <= k - 2:
                 u, v = e = vert[lowestSup]
@@ -226,7 +213,7 @@ class LCTCSearch:
                 for w in graph[x]:
                     e1 = self.cedge(v, w)
                     e2 = self.cedge(u, w)
-                    if edgeExist[e1] and edgeExist[e2]:
+                    if (edgeExist.get(e1) is not None and edgeExist[e1]==1) and (edgeExist.get(e2) is not None and edgeExist[e2]==1):
                         # 维护vert 改变两条边在vert中的位置
                         for ex in [e1, e2]:
                             pw = max(bin[supE[ex]], lowestSup + 1)
@@ -247,6 +234,7 @@ class LCTCSearch:
                 if numEdge == 0: break
                 lowestSup += 1
             k += 1
+        print("ok3")
         print(" \t\t else time", time.time() - nowtime)
         return ansSupE, TE
 
@@ -518,7 +506,7 @@ class LCTCSearch:
             resultP = results['allprecision'] * 1.0 / len(self.ExperimentalDataList)
             resultR = results['allrecall'] * 1.0 / len(self.ExperimentalDataList)
             averagelen = results['allmemberlen'] * 1.0 / len(self.ExperimentalDataList)
-            TimeEvaluation = query_duration * 1.0 / len(self.ExperimentalDataList) / averagelen
+            TimeEvaluation = duration * 1.0 / len(self.ExperimentalDataList) / averagelen
         return [resultS, resultP, resultR, duration, build_duration, query_duration, TimeEvaluation]
 
 

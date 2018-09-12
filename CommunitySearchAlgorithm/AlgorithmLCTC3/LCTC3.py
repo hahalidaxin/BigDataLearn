@@ -1,13 +1,12 @@
 import copy
 import queue
-from collections import defaultdict
 from collections import Counter
 import sys
 import time
 from . import SortAlgorithm
 # import CommunitySearch as CS
 
-INF = 9999999
+INF = float('inf')
 
 
 class STEINER:
@@ -24,7 +23,7 @@ class STEINER:
         distG, inq, s, distTruss = {}, {}, {}, {}
         father = {}
         self.maxTruss = maxTruss = max(self.TE.values())
-        self.minTruss = minTruss = defaultdict(int)
+        self.minTruss = minTruss = {}
 
         for v in graph.keys():
             distG[v] = self.INF
@@ -43,6 +42,7 @@ class STEINER:
             inq[u] = 0
             if graph.get(u) is None: continue
             for v in graph[u]:
+
                 tmpminTruss = min(self.TE[self.cedge(u, v)], minTruss[u])
                 tmpTruss = distG[u] + 1 + self.factor * (maxTruss - tmpminTruss)
                 if tmpTruss < distTruss[v]:
@@ -69,13 +69,15 @@ class STEINER:
                     deltadist = self.factor * (
                             self.maxTruss - min([self.minTruss[u], self.minTruss[v], self.TE[self.cedge(u, v)]]))
                     triList.append((self.s[u], self.s[v], self.distTruss[u] + self.distTruss[v] + deltadist, (u, v)))
-        G1 = defaultdict(list)
+        G1 = {}
         triList.sort()
         print(' \t\t sortime',time.time()-nowtime)
         mediumTurple = {}
         for i in range(len(triList)):
             su, sv, w, (u, v) = triList[i]
             if i == 0 or (su, sv) != triList[i - 1][0:2]:
+                if G1.get(su) is None: G1[su]=[]
+                if G1.get(sv) is None: G1[sv]=[]
                 G1[su].append((sv, w))
                 G1[sv].append((su, w))
             mediumTurple[(su, sv)] = (u, v)
@@ -92,7 +94,7 @@ class STEINER:
 
     def KRUSKAL(self, graph):
         edges, fa = [], {}
-        ansG = defaultdict(list)
+        ansG = {}
         for u in graph:
             fa[u] = u
             for v, w in graph[u]:
@@ -103,13 +105,15 @@ class STEINER:
             x, y = self.find(u, fa), self.find(v, fa)
             if x != y:
                 fa[x] = y
+                if ansG.get(u) is None: ansG[u] = []
+                if ansG.get(v) is None: ansG[v] = []
                 ansG[u].append((v, w))
                 ansG[v].append((u, w))
         if len(graph) == 1: ansG[list(graph.keys())[0]] = []
         return ansG
 
     def EXPAND(self, graph):
-        newG = defaultdict(list)
+        newG = {}
         father = self.father
         mediumTurple = self.mediumTurple
         distuv = {}
@@ -122,22 +126,26 @@ class STEINER:
             for x in [u, v]:
                 while x != father[x]:
                     tmpdist = 1 + self.factor * (self.maxTruss - self.TE[self.cedge(x, father[x])])
+                    if newG.get(x) is None: newG[x] = []
+                    if newG.get(father[x]) is None: newG[father[x]] = []
                     newG[x].append((father[x], tmpdist))
                     newG[father[x]].append((x, tmpdist))
                     x = father[x]
             tmpdist = 1 + self.factor * (self.maxTruss - self.TE[self.cedge(u, v)])
+            if newG.get(u) is None: newG[u] = []
+            if newG.get(v) is None: newG[v] = []
             newG[u].append((v, tmpdist))
             newG[v].append((u, tmpdist))
         if len(graph) == 1: newG[list(graph.keys())[0]] = []
         for v in newG:
-            newG[v] = {}.fromkeys(newG[v]).keys()  # å»æ‰é‡å¤çš„è¾¹
+            newG[v] = {}.fromkeys(newG[v]).keys()  # È¥µôÖØ¸´µÄ±ß
         return newG
 
     def DELETELEAF(self, graph, Q):
         flag = {}
         for v in graph.keys():
             flag[v] = 0 if (graph[v].__len__() == 1 and not (v in Q)) else 1
-        newG = defaultdict(list)
+        newG = {}
         for v in graph.keys():
             if flag[v]:
                 newG[v] = []
@@ -167,7 +175,7 @@ class STEINER:
             return G5
 
 
-class LCTCSearch:
+class LCTC3Search:
     def __init__(self, graph_information, tempt_nodes_information, ExperimentalDataList):
         self.graph_information = graph_information
         self.tempt_nodes_information = tempt_nodes_information
@@ -178,34 +186,30 @@ class LCTCSearch:
         return min(u, v), max(u, v)
 
     def EDGETRUSS(self, graph):
-        # åˆ©ç”¨Improved Truss Decompositionç®—æ³• è®¡ç®—grapnä¸­æ¯æ¡è¾¹çš„trussness
-        supE = defaultdict(int)
-        edgeExist = defaultdict(int)
+        # ÀûÓÃImproved Truss DecompositionËã·¨ ¼ÆËãgrapnÖĞÃ¿Ìõ±ßµÄtrussness
+        supE = {}
+        edgeExist = {}
         nowtime = time.time()
-        deg = {}
         for u in graph:
-            deg[u] = len(graph[u])
-            for v in graph[u]:
-                e = self.cedge(u,v)
-                if not edgeExist[e]:
-                    edgeExist[e] = 1
-                    supE[e] = len(set(graph[u])&set(graph[v]))
-        '''
-        for u in graph:
-            deg[u] = len(graph[u])
             for v in graph[u]:
                 e = self.cedge(u, v)
-                edgeExist[e] = 1
-        edgelist = list(edgeExist.keys())
-        for e in edgelist:
-            u,v = e
-            x = u if deg[u]<deg[v] else v
-            for w in graph[x]:
-                if edgeExist[self.cedge(u,w)] and edgeExist[self.cedge(v,w)]:
-                    supE[e] += 1
-        '''
+                if edgeExist.get(e) is None:
+                    edgeExist[e] = 1
+                    # supE[e] = len(set(graph[u])&set(graph[v]))
+        cedge = self.cedge
+        for u, v in edgeExist:
+            if supE.get((u, v)) is None: supE[(u, v)] = 0
+            if len(graph[u]) > len(graph[u]):
+                u, v = v, u
+            for w in graph[u]:
+                if edgeExist.get(cedge(u, w)) is not None and edgeExist.get(cedge(v, w)) is not None:
+                    supE[cedge(u, v)] = supE.get(cedge(u, v), 0) + 1
+                    supE[cedge(u, w)] = supE.get(cedge(u, w), 0) + 1
+                    supE[cedge(v, w)] = supE.get(cedge(v, w), 0) + 1
+        for e in edgeExist:
+            supE[e]=int(supE[e]/3)
         ansSupE = copy.copy(supE)
-        # æ„é€ vert æŒ‰ç…§supé¡ºåºå­˜å‚¨æ‰€æœ‰çš„è¾¹ å…¶ä¸­binä¸posæ˜¯è¾…åŠ©æ•°ç»„ ä½¿å¾—updateæ“ä½œèƒ½å¤Ÿåœ¨å¸¸æ•°æ—¶é—´å†…å®Œæˆ
+        # ¹¹Ôìvert °´ÕÕsupË³Ğò´æ´¢ËùÓĞµÄ±ß ÆäÖĞbinÓëposÊÇ¸¨ÖúÊı×é Ê¹µÃupdate²Ù×÷ÄÜ¹»ÔÚ³£ÊıÊ±¼äÄÚÍê³É
         vert = SortAlgorithm.bulksort(list(supE.keys()),func = lambda x: supE[x])
         print(" \t\t intersection time", time.time() - nowtime)
         nowtime = time.time()
@@ -218,16 +222,16 @@ class LCTCSearch:
                 last = supE[vert[i]]
         k, lowestSup = 2, 0
         tmpNumEdge = numEdge
-        TE = defaultdict(int)
+        TE = {}
         while numEdge:
             while lowestSup < tmpNumEdge and supE[vert[lowestSup]] <= k - 2:
                 u, v = e = vert[lowestSup]
-                x = u if deg[u] < deg[v] else v
+                x = u if len(graph[u]) < len(graph[v]) else v
                 for w in graph[x]:
                     e1 = self.cedge(v, w)
                     e2 = self.cedge(u, w)
-                    if edgeExist[e1] and edgeExist[e2]:
-                        # ç»´æŠ¤vert æ”¹å˜ä¸¤æ¡è¾¹åœ¨vertä¸­çš„ä½ç½®
+                    if (edgeExist.get(e1) is not None and edgeExist[e1]==1) and (edgeExist.get(e2) is not None and edgeExist[e2]==1):
+                        # Î¬»¤vert ¸Ä±äÁ½Ìõ±ßÔÚvertÖĞµÄÎ»ÖÃ
                         for ex in [e1, e2]:
                             pw = max(bin[supE[ex]], lowestSup + 1)
                             pu = pos[ex]
@@ -257,11 +261,13 @@ class LCTCSearch:
                 if v < u: kt = min(kt, TE[self.cedge(v, u)])
         if len(graph) == 1: kt = 0
         que = queue.Queue()
-        flag = defaultdict(int)
+        flag = {}
+        for v in graph:
+            flag[v]=0
         for v in graph.keys():
             que.put(v)
             flag[v] = 1
-        flagedge = defaultdict(int)
+        flagedge = {}
         while not que.empty() and len(graph) < szLimit:
             u = que.get()
             for v in oriGraph[u]:
@@ -269,41 +275,45 @@ class LCTCSearch:
                     if len(graph) >= szLimit:
                         break
                     else:
-                        if not flagedge[self.cedge(u, v)]:
+                        if flagedge.get(self.cedge(u, v)) is None:
+                            if graph.get(v) is None: graph[v] = []
+                            if graph.get(u) is None: graph[u] = []
                             graph[v].append((u, 1))
                             graph[u].append((v, 1))
                             flagedge[self.cedge(u, v)] = 1
-                        if flag[v] == 0:
+                        if flag.get(v) is None:
                             flag[v] = 1
                             que.put(v)
         vertices = list(flag.keys())
         for v in vertices:
             for u in oriGraph[v]:
-                if flag[u] and not flagedge[self.cedge(u, v)]:
+                if (flag.get(u) is not None and flag[u]) and flagedge.get(self.cedge(u, v)) is None:
                     graph[v].append((u, 1))
 
     def FINDG0(self, graph, oriGraph, Q, szLimit, TE):
-        # è¿”å›ä¸€ä¸ªæœ€å¤§çš„k-trussï¼Œä½¿å¾—k-trussåŒ…å«Qä¸”kæœ€å¤§
-        # First ä½¿ç”¨truss-decompositionç®—æ³•è®¡ç®—æ‰€æœ‰è¾¹çš„trussness
-        # è¿™é‡Œæ¥æ”¶åˆ°çš„graphæ˜¯ä¸€æ£µsteinertree
+        # ·µ»ØÒ»¸ö×î´óµÄk-truss£¬Ê¹µÃk-truss°üº¬QÇÒk×î´ó
+        # First Ê¹ÓÃtruss-decompositionËã·¨¼ÆËãËùÓĞ±ßµÄtrussness
+        # ÕâÀï½ÓÊÕµ½µÄgraphÊÇÒ»¿Ãsteinertree
         nowtime = time.time()
         self.BFSEXTENDG(graph, oriGraph, szLimit, TE)
         newG = {v: [e[0] for e in graph[v]] for v in graph}
         print(' \t\t sort time', time.time() - nowtime)
-        # å¯¹äºæ’åº å¦‚æœæ—¶é—´å¤ªé•¿å¯ä»¥è€ƒè™‘ä½¿ç”¨æ¡¶æ’åº
+        # ¶ÔÓÚÅÅĞò Èç¹ûÊ±¼äÌ«³¤¿ÉÒÔ¿¼ÂÇÊ¹ÓÃÍ°ÅÅĞò
         for v in graph:
             graph[v].sort(key=lambda x: -TE[self.cedge(x[0], v)])
         k = min(TE[self.cedge(u, graph[u][0][0])] for u in Q)
-        S = defaultdict(set)
+        S = {}
         V, Vedge = set(), set()
         S[k] = set(Q)
-        G0 = defaultdict(list)
+        G0 = {}
         indexte = {v: 0 for v in graph}
         cnt = 0
         # print("k of this time ",k)
         while self.connected(G0, Q) is False:
             cnt += 1
             queK = queue.Queue()
+            if k not in S.keys():
+                S[k] = set()
             for v in S[k]: queK.put(v)
             while not queK.empty():
                 v = queK.get()
@@ -321,6 +331,8 @@ class LCTCSearch:
                     if TE[self.cedge(u, v)] < kmax:
                         if not (self.cedge(u, v) in Vedge):
                             Vedge.add(self.cedge(u, v))
+                            if G0.get(u) is None: G0[u] = []
+                            if G0.get(v) is None: G0[v] = []
                             G0[u].append((v, 1))
                             G0[v].append((u, 1))
                         if not u in S[k]:
@@ -329,6 +341,7 @@ class LCTCSearch:
                     indexte[v] += 1
                 if not indexte[v] == len(graph[v]):
                     l = TE[self.cedge(v, graph[v][indexte[v]][0])]
+                    if S.get(l) is None: S[l]=set()
                     S[l].add(v)
             k -= 1
         return G0
@@ -337,19 +350,22 @@ class LCTCSearch:
         que = queue.Queue()
         que.put(v)
         flag[v] = color
+        cnt=0
         while not que.empty():
             v = que.get()
+            cnt+=1
+            if graph.get(v) is None: continue
             for u, w in graph[v]:
-                if not flag[u]:
+                if flag.get(u) is None:
                     flag[u] = color
                     que.put(u)
 
     def connected(self, graph, Q):
         if len(graph) == 0: return False
-        flag = defaultdict(int)
+        flag = {}
         color, count = 1, 0
         for v in Q:
-            if not flag[v]:
+            if flag.get(v) is None:
                 count += 1
                 if count >= 2: break
                 self.dfs(v, graph, color, flag)
@@ -357,9 +373,9 @@ class LCTCSearch:
         if len(graph) == 0: return False
         return True if count == 1 else False
 
-    def MAINTAINKTRUSS(self, graph, L, k, supE):
+    def MAINTAINKTRUSS(self, graph, L, k, supE,Q):
         S = set()
-        flag = defaultdict(int)
+        flag = {}
         for v in L:
             for u, w in graph[v]:
                 S.add(self.cedge(u, v))
@@ -374,15 +390,15 @@ class LCTCSearch:
                 e1, e2 = self.cedge(u, w), self.cedge(v, w)
                 for ex in [e1, e2]:
                     supE[ex] -= 1
-                    if supE[ex] < k - 2 and not ex in S and not flag[ex]:
+                    if supE[ex] < k - 2 and not ex in S and flag.get(ex) is None:
                         S.add(ex)
             flag[self.cedge(u, v)] = 1
-        ansG = defaultdict(list)
+        ansG = {}
         for v in graph.keys():
             if not v in L:
                 ansG[v] = []
                 for u, w in graph[v]:
-                    if not flag[self.cedge(u, v)]:
+                    if flag.get(self.cedge(u, v)) is None:
                         ansG[v].append((u, 1))
         return ansG
 
@@ -391,7 +407,7 @@ class LCTCSearch:
         for v in graph.keys(): ansdistG[v] = -INF
         for q in Q:
             distG = {}
-            flag = defaultdict(int)
+            flag = {}
             que = queue.Queue()
             distG[q] = 0
             flag[q] = 1
@@ -399,7 +415,7 @@ class LCTCSearch:
             while not que.empty():
                 u = que.get()
                 for v, w in graph[u]:
-                    if flag[v] == 0:
+                    if flag.get(v) is None:
                         distG[v] = distG[u] + 1
                         flag[v] = 1
                         que.put(v)
@@ -414,9 +430,12 @@ class LCTCSearch:
             for u, w in graph[v]:
                 newG[v].append(u)
         d = INF
-        ansG = defaultdict(list)
+        ansG = {}
         K = min(TE.values())
         while self.connected(graph, Q):
+            for q in Q:
+                if not q in graph:
+                    break
             distG = self.COMPUTEDIST(graph, Q)
             maxdistG = max(distG.values())
             if maxdistG == 0: break
@@ -424,17 +443,17 @@ class LCTCSearch:
                 d = maxdistG
                 ansG = copy.deepcopy(graph)
             L = {x for x in distG.keys() if distG[x] >= d}
-            graph = self.MAINTAINKTRUSS(graph, L, K, copy.copy(supE))
+            graph = self.MAINTAINKTRUSS(graph, L, K, copy.copy(supE),Q)
         return ansG
 
     def prepareforq(self, Q, graph):
         flag = {v: 1 for v in Q if graph.get(v) is None}
         for v in flag: Q.remove(v)
         newG = {v: [(u, 1) for u in graph[v]] for v in graph}
-        label = defaultdict(int)
+        label = {}
         color = 1
         for v in Q:
-            if not label[v]:
+            if label.get(v) is None:
                 self.dfs(v, newG, color, label)
                 color += 1
         maxlabel = Counter(label.values()).most_common(1)[0][0]
@@ -465,7 +484,7 @@ class LCTCSearch:
         ansg = list(set(list(ansG.keys())) | set(Q))
         return ansg
 
-    ### STEP3 ç»“æœè¯„ä¼° ###
+    ### STEP3 ½á¹ûÆÀ¹À ###
     def F1Score(self, GMembers, SearchedMembers):
         samen = 0
         for i in GMembers:

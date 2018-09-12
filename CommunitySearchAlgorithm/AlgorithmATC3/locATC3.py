@@ -12,7 +12,7 @@ from AlgorithmATC.Steiner import Steiner
 from AlgorithmATC import AttributeScoreFunc
 import time
 
-class locATCSearch:
+class locATC3Search:
     def __init__(self,graph_information,tempt_nodes_information,ExperimentalDataList):
         self.graph_information = graph_information
         self.tempt_nodes_information = tempt_nodes_information

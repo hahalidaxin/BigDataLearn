@@ -403,10 +403,13 @@ class ACCSearch:
             'allrecall': 0,
             'allmemberlen': 0
         }
+        bstarttime = time.time()
         self.cltree = CL_TREE(graph, property)
-        print('cltree built')
+        bendtime = time.time()
+        addedtime = bendtime - bstarttime
+        print(' \t\t cltree built')
         for i in range(0, len(self.ExperimentalDataList)):
-            print("rk {} of {}".format(i, len(self.ExperimentalDataList)))
+            print(" \t\t rk {} of {}".format(i, len(self.ExperimentalDataList)))
             TestData = self.ExperimentalDataList[i]
             group_name = TestData[0]
             QVlist = TestData[1]
@@ -421,6 +424,8 @@ class ACCSearch:
             results['allmemberlen'] = results['allmemberlen'] + len(GMembers)
         endtime = time.time()
         duration = endtime - starttime
+        build_duration = addedtime
+        query_duration = duration - build_duration
         if len(self.ExperimentalDataList) == 0:
             resultS = -1
             resultP = -1
@@ -432,8 +437,8 @@ class ACCSearch:
             resultP = results['allprecision'] * 1.0 / len(self.ExperimentalDataList)
             resultR = results['allrecall'] * 1.0 / len(self.ExperimentalDataList)
             averagelen = results['allmemberlen'] * 1.0 / len(self.ExperimentalDataList)
-            TimeEvaluation = duration * 1.0 / len(self.ExperimentalDataList) / averagelen
-        return [resultS, resultP, resultR, duration, TimeEvaluation]
+            TimeEvaluation = query_duration * 1.0 / len(self.ExperimentalDataList) / averagelen
+        return [resultS, resultP, resultR, duration, build_duration, query_duration, TimeEvaluation]
 
 
 ''''

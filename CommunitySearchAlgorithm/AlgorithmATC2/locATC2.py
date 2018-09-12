@@ -6,13 +6,13 @@ from collections import defaultdict
 from collections import Counter
 import sys
 sys.path.append("../")
-from AlgorithmATC import GraphFunc
-from AlgorithmATC import ATindex
-from AlgorithmATC.Steiner import Steiner
-from AlgorithmATC import AttributeScoreFunc
+from AlgorithmATC2 import GraphFunc
+from AlgorithmATC2 import ATindex
+from AlgorithmATC2.Steiner import Steiner
+from AlgorithmATC2 import AttributeScoreFunc
 import time
 
-class locATCSearch:
+class locATC2Search:
     def __init__(self,graph_information,tempt_nodes_information,ExperimentalDataList):
         self.graph_information = graph_information
         self.tempt_nodes_information = tempt_nodes_information
@@ -22,6 +22,7 @@ class locATCSearch:
         self.attrTE = None
         self.attrSupE = None
         self.szlimits = 60
+        self.attrTE_forall,self.attrSupE_forall = {},{}
         return
 
     def cedge(self,u,v):
@@ -29,7 +30,7 @@ class locATCSearch:
 
     def getGraphWithAttrDist(self,graph,Wq,attrTE):
         delta = 3
-        maxTe = max(attrTE[''].values())
+        maxTe = max(self.attrTE_forall.values())
         newG = defaultdict(list)
         for v in graph.keys():
             for u in graph[v][0]:
@@ -176,13 +177,12 @@ class locATCSearch:
         else :
             self.szlimits = 50
         nowQ = self.prepareforATC(graph,Q,Wq)
-        global attrTE, attrSupE
         starttime = time.time()
-        self.attrTE,self.attrSupE = ATindex.AttributedTrussness(graph,Wq,self.attrTE,self.attrSupE)
+        attrTE,attrSupE,self.attrTE_forall,self.attrSupE_forall= ATindex.AttributedTrussness(graph,Wq,self.attrTE_forall,self.attrSupE_forall)
         endtime = time.time()
-        steiner = Steiner(self.getGraphWithAttrDist(graph, Wq, self.attrTE),nowQ)  # steiner G 's :{v->[u1,u2...]}
+        steiner = Steiner(self.getGraphWithAttrDist(graph, Wq, attrTE),nowQ)  # steiner G 's :{v->[u1,u2...]}
         if steiner.G is None or len(steiner.G) == 0: return Q
-        Gt = self.ExtendtoGt(steiner.G, graph, Wq, self.attrTE[''])
+        Gt = self.ExtendtoGt(steiner.G, graph, Wq, self.attrTE_forall)
         ansg = self.BULK(Gt, nowQ, Wq, k, d)
         for q in Q:
             if not q in ansg :
@@ -216,11 +216,9 @@ class locATCSearch:
             group_name = TestData[0]
             QVlist = TestData[1]
             QAlist = TestData[2]
-            #print(" \t\t QVlist: "+str(QAlist)+", QAlist: "+str(QAlist)+", group_name: "+str(group_name))
             GMembers = self.graph_information['Groups'][group_name][0]
             SearchedMembers,addedtime = self.locATC_MAIN(self.tempt_nodes_information, QVlist, QAlist)
             [precision,recall,score] = self.F1Score(GMembers,SearchedMembers)
-            #print(str([precision,recall,score]))
             results['allscore'] = results['allscore'] + score
             results['allprecision'] = results['allprecision'] + precision
             results['allrecall'] = results['allrecall'] + recall
